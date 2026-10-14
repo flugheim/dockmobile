@@ -1,0 +1,159 @@
+/**
+ * Global tilstand: tilkoblingsinnstillinger (URL + token + valgt miljø),
+ * lagret sikkert på telefonen med expo-secure-store.
+ */
+
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { DockhandClient } from '../api/client';
+import type { ConnectionSettings, DockhandEnvironment } from '../types';
+
+const KEY_URL = 'dockhand.baseUrl';
+const KEY_TOKEN = 'dockhand.token';
+const KEY_ENV_ID = 'dockhand.envId';
+const KEY_ENV_NAME = 'dockhand.envName';
+
+interface SettingsValue {
+  status: 'loading' | 'disconnected' | 'connected';
+  settings: ConnectionSettings | null;
+  environments: DockhandEnvironment[];
+  /** Klient knyttet til gjeldende innstillinger (null hvis ikke tilkoblet). */
+  client: DockhandClient | null;
+  /** Validerer innstillingene mot serveren og lagrer ved suksess. */
+  connect: (baseUrl: string, token: string, env?: DockhandEnvironment | null) => Promise<void>;
+  selectEnvironment: (env: DockhandEnvironment) => Promise<void>;
+  disconnect: () => Promise<void>;
+  error: string | null;
+}
+
+const SettingsContext = createContext<SettingsValue | null>(null);
+
+function normalizeUrl(raw: string): string {
+  let url = raw.trim();
+  if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+  return url.replace(/\/+$/, '');
+}
+
+export function SettingsProvider({ children }: { children: React.ReactNode }) {
+  const [settings, setSettings] = useState<ConnectionSettings | null>(null);
+  const [environments, setEnvironments] = useState<DockhandEnvironment[]>([]);
+  const [status, setStatus] = useState<'loading' | 'disconnected' | 'connected'>('loading');
+  const [error, setError] = useState<string | null>(null);
+
+  // Les lagrede innstillinger ved oppstart
+  useEffect(() => {
+    (async () => {
+      try {
+        const [url, token, envId, envName] = await Promise.all([
+          SecureStore.getItemAsync(KEY_URL),
+          SecureStore.getItemAsync(KEY_TOKEN),
+          SecureStore.getItemAsync(KEY_ENV_ID),
+          SecureStore.getItemAsync(KEY_ENV_NAME),
+        ]);
+        if (url && token) {
+          setSettings({
+            baseUrl: url,
+            token,
+            envId: envId ?? null,
+            envName: envName ?? null,
+          });
+          setStatus('connected');
+        } else {
+          setStatus('disconnected');
+        }
+      } catch {
+        setStatus('disconnected');
+      }
+    })();
+  }, []);
+
+  const persist = useCallback(async (s: ConnectionSettings) => {
+    await SecureStore.setItemAsync(KEY_URL, s.baseUrl);
+    await SecureStore.setItemAsync(KEY_TOKEN, s.token);
+    if (s.envId) await SecureStore.setItemAsync(KEY_ENV_ID, s.envId);
+    if (s.envName) await SecureStore.setItemAsync(KEY_ENV_NAME, s.envName);
+  }, []);
+
+  const connect = useCallback(
+    async (rawUrl: string, token: string, env?: DockhandEnvironment | null) => {
+      setError(null);
+      const baseUrl = normalizeUrl(rawUrl);
+      if (!token.trim()) {
+        setError('Lim inn en API-token (starter med dh_).');
+        throw new Error('missing token');
+      }
+      const probe = new DockhandClient({ baseUrl, token, timeoutMs: 15000 });
+      const envs = await probe.getEnvironments();
+      if (envs.length === 0) {
+        setError('Tilkoblet, men ingen miljøer å vise.');
+        throw new Error('no environments');
+      }
+      const chosen = env ?? envs[0];
+      const next: ConnectionSettings = {
+        baseUrl,
+        token: token.trim(),
+        envId: chosen.id,
+        envName: chosen.name,
+      };
+      await persist(next);
+      setSettings(next);
+      setEnvironments(envs);
+      setStatus('connected');
+    },
+    [persist],
+  );
+
+  const selectEnvironment = useCallback(
+    async (env: DockhandEnvironment) => {
+      setSettings((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, envId: env.id, envName: env.name };
+        void persist(next);
+        return next;
+      });
+      setEnvironments((prev) => (prev.some((e) => e.id === env.id) ? prev : [...prev, env]));
+    },
+    [persist],
+  );
+
+  const disconnect = useCallback(async () => {
+    await Promise.all([
+      SecureStore.deleteItemAsync(KEY_URL),
+      SecureStore.deleteItemAsync(KEY_TOKEN),
+      SecureStore.deleteItemAsync(KEY_ENV_ID),
+      SecureStore.deleteItemAsync(KEY_ENV_NAME),
+    ]);
+    setSettings(null);
+    setEnvironments([]);
+    setStatus('disconnected');
+  }, []);
+
+  const client = useMemo(
+    () => (settings ? new DockhandClient({
+      baseUrl: settings.baseUrl,
+      token: settings.token,
+      envId: settings.envId,
+    }) : null),
+    [settings],
+  );
+
+  const value = useMemo<SettingsValue>(
+    () => ({ status, settings, environments, client, connect, selectEnvironment, disconnect, error }),
+    [status, settings, environments, client, connect, selectEnvironment, disconnect, error],
+  );
+
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+}
+
+export function useSettings(): SettingsValue {
+  const ctx = useContext(SettingsContext);
+  if (!ctx) throw new Error('useSettings må brukes inne i SettingsProvider');
+  return ctx;
+}

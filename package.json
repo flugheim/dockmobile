@@ -29,5 +29,8 @@
     "lint": "expo lint",
     "test": "tsc src/__tests__/client.test.ts --ignoreConfig --outDir dist-test --module commonjs --moduleResolution node10 --ignoreDeprecations 6.0 --target es2020 --skipLibCheck --esModuleInterop && node dist-test/__tests__/client.test.js"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "react-dom": "19.2.3"
+  }
 }

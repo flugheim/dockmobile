@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -10,9 +11,10 @@ import {
 import { Redirect, useRouter, useFocusEffect } from 'expo-router';
 import { extractUpdateIds } from '../api/client';
 import { ContainerCard } from '../components/ContainerCard';
+import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
-import type { Container } from '../types';
+import type { Container, DockhandEnvironment } from '../types';
 import { colors, radius } from '../theme';
 
 type Filter = 'all' | 'running' | 'stopped' | 'updates';
@@ -25,7 +27,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 
 export default function ContainersScreen() {
-  const { client, settings, status } = useSettings();
+  const { client, settings, status, environments, selectEnvironment } = useSettings();
   const router = useRouter();
   const [containers, setContainers] = useState<Container[]>([]);
   const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
@@ -37,6 +39,7 @@ export default function ContainersScreen() {
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [updatingAll, setUpdatingAll] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(
@@ -186,6 +189,14 @@ export default function ContainersScreen() {
     );
   }
 
+  async function onSelectEnvironment(env: DockhandEnvironment) {
+    setPickerOpen(false);
+    await selectEnvironment(env);
+    setContainers([]);
+    setUpdateIds(new Set());
+    void load('initial');
+  }
+
   if (status === 'disconnected') {
     return <Redirect href="/connect" />;
   }
@@ -201,16 +212,22 @@ export default function ContainersScreen() {
   return (
     <View style={styles.flex}>
       <View style={styles.topBar}>
-        <View style={styles.topBarText}>
-          <Text style={styles.envName} numberOfLines={1}>
-            {settings?.envName ?? 'Miljø'}
-          </Text>
-          <Text style={styles.meta}>
-            {lastUpdated
-              ? `Oppdatert ${lastUpdated.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}`
-              : ' '}
-          </Text>
-        </View>
+        <Pressable
+          style={styles.envButton}
+          onPress={() => setPickerOpen(true)}
+          testID="env-switcher"
+        >
+          <View style={styles.topBarText}>
+            <Text style={styles.envName} numberOfLines={1}>
+              {settings?.envName ?? 'Miljø'} ⌄
+            </Text>
+            <Text style={styles.meta}>
+              {lastUpdated
+                ? `Oppdatert ${lastUpdated.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })} · trykk for å bytte`
+                : ' '}
+            </Text>
+          </View>
+        </Pressable>
         <View style={styles.topBarActions}>
           <Button
             label="Innstillinger"
@@ -228,6 +245,14 @@ export default function ContainersScreen() {
           />
         </View>
       </View>
+
+      <EnvironmentPicker
+        visible={pickerOpen}
+        environments={environments}
+        currentEnvId={settings?.envId ?? null}
+        onSelect={(env) => void onSelectEnvironment(env)}
+        onClose={() => setPickerOpen(false)}
+      />
 
       {withUpdates.length > 0 ? (
         <View style={styles.updateBanner}>
@@ -319,6 +344,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topBarText: { flex: 1 },
+  envButton: { flex: 1 },
   envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },

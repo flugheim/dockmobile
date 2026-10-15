@@ -25,6 +25,13 @@
     "plugins": [
       "expo-secure-store",
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b06ee1c2-474a-44d0-ab6b-ff9cfb9f73ea"
+      }
+    },
+    "owner": "flugheim"
   }
 }

@@ -34,14 +34,14 @@ Repo: https://github.com/flugheim/dockmobile
 Builds:
   - versionName: 1.1.0
     versionCode: 2
-    commit: v1.1.0
+    commit: 8a4061bd8992639dd41eb4cfce3478dc85739071
     subdir: android
     gradle:
       - yes
     prebuild:
       - npm ci --prefix=..
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 1.1.0
 CurrentVersionCode: 2

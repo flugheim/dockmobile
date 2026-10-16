@@ -1,1 +1,1 @@
-Uavhengig Android-klient for Dockhand – se og oppdater Docker-containere fra mobilen.
+Independent Android client for Dockhand – manage and update containers

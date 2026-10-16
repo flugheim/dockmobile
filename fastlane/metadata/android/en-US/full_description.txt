@@ -1,4 +1,4 @@
-Dockhand Mobil is an independent, open-source Android client for Dockhand,
+DockMobile is an independent, open-source Android client for Dockhand,
 the self-hosted Docker management UI.
 
 - Container list with live status (running / stopped / paused)

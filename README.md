@@ -1,4 +1,4 @@
-# Dockhand Mobil
+# DockMobile
 
 An independent Android client for [Dockhand](https://dockhand.pro) – built to be
 fast and simple for daily use, with one focus: **keeping your containers updated**.
@@ -97,20 +97,6 @@ cd android
 The APK ends up in `android/app/build/outputs/apk/release/`. Sign it with your
 own keystore for distribution outside F-Droid.
 
-### Submitting to F-Droid
-
-1. Make the GitHub repo **public** (F-Droid only builds from public sources)
-2. Verify the draft in `fdroid/no.flugheim.dockmobile.yml` against the
-   [Build Metadata Reference](https://f-droid.org/docs/Build_Metadata_Reference/)
-3. Submit it as a merge request to
-   [fdroiddata](https://gitlab.com/fdroid/fdroiddata) as
-   `metadata/no.flugheim.dockmobile.yml`
-
-Note: F-Droid signs with its own key. If you already have the EAS build
-(`v1.0.0` from GitHub releases) installed, it must be uninstalled before the
-F-Droid version can be installed – same package name
-(`no.flugheim.dockmobile`), different signature.
-
 ## Project structure
 
 ```
@@ -173,7 +159,7 @@ npx expo export --platform android   # verify that the app builds
 
 ---
 
-# Dockhand-mobil (norsk)
+# DockMobile (norsk)
 
 En uavhengig Android-klient for [Dockhand](https://dockhand.pro) – laget for å være
 rask og enkel i daglig bruk, med fokus på én ting: **å holde containerne oppdatert**.
@@ -269,19 +255,6 @@ cd android
 
 APK-en havner i `android/app/build/outputs/apk/release/`. Signer den med din
 egen keystore for distribusjon utenfor F-Droid.
-
-### Sende inn til F-Droid
-
-1. Gjør GitHub-repoet **offentlig** (F-Droid bygger kun fra offentlig kilde)
-2. Verifiser utkastet i `fdroid/no.flugheim.dockmobile.yml` mot
-   [Build Metadata Reference](https://f-droid.org/docs/Build_Metadata_Reference/)
-3. Send det som merge request til
-   [fdroiddata](https://gitlab.com/fdroid/fdroiddata) som
-   `metadata/no.flugheim.dockmobile.yml`
-
-Merk: F-Droid signerer med sin egen nøkkel. Har du EAS-bygget (`v1.0.0` fra
-GitHub-releases) installert fra før, må det avinstalleres før F-Droid-versjonen
-kan installeres – samme pakkenavn (`no.flugheim.dockmobile`), ulik signatur.
 
 ## Prosjektstruktur
 

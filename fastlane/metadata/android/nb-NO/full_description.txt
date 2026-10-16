@@ -1,4 +1,4 @@
-Dockhand Mobil er en uavhengig Android-klient med åpen kildekode for Dockhand,
+DockMobile er en uavhengig Android-klient med åpen kildekode for Dockhand,
 plattformen for å styre Docker fra nettleseren.
 
 - Containerliste med sanntidsstatus (kjører / stoppet / pauset)

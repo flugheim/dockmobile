@@ -113,7 +113,7 @@ const en = {
   settings_switchEnv: 'Switch environment',
   settings_about: 'About the app',
   settings_about1:
-    'Dockhand Mobil is an independent client for Dockhand. All communication goes directly from your phone to your own server – no data is sent to third parties.',
+    'DockMobile is an independent client for Dockhand. All communication goes directly from your phone to your own server – no data is sent to third parties.',
   settings_about2:
     'If you use a self-signed certificate, open the server once in the browser on your phone and accept it, or run Dockhand behind an https proxy.',
   settings_remove: 'Remove connection',
@@ -218,7 +218,7 @@ const nb: Record<TransKey, string> = {
   settings_switchEnv: 'Bytt miljø',
   settings_about: 'Om appen',
   settings_about1:
-    'Dockhand-mobil er en uavhengig klient for Dockhand. All kommunikasjon går direkte fra telefonen til din egen server – ingen data sendes til tredjepart.',
+    'DockMobile er en uavhengig klient for Dockhand. All kommunikasjon går direkte fra telefonen til din egen server – ingen data sendes til tredjepart.',
   settings_about2:
     'Bruker du et selvsignert sertifikat, åpne serveren én gang i nettleseren på telefonen og godta det, eller kjør Dockhand bak en https-proxy.',
   settings_remove: 'Fjern tilkobling',

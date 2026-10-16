@@ -1,0 +1,17 @@
+Dockhand Mobil is an independent, open-source Android client for Dockhand,
+the self-hosted Docker management UI.
+
+- Container list with live status (running / stopped / paused)
+- One-tap update of a single container (pull new image + recreate)
+- "Update all" for every container with a pending update
+- "Check now" to ask Dockhand for new images on demand
+- Start / stop / restart with confirmation
+- Container details and log viewer with auto-refresh
+- Switch between multiple Docker environments from the home screen
+- API token stored encrypted on the phone (Android Keystore)
+
+The app talks directly from your phone to your own Dockhand server using
+Dockhand's public REST API and a personal API token (dh_...). No third
+party is involved. Create a token in Dockhand under Profile → API tokens.
+
+This project is not affiliated with Finsys/Dockhand.

@@ -1,0 +1,17 @@
+Dockhand Mobil er en uavhengig Android-klient med åpen kildekode for Dockhand,
+plattformen for å styre Docker fra nettleseren.
+
+- Containerliste med sanntidsstatus (kjører / stoppet / pauset)
+- Én-trykks oppdatering av enkeltcontainere (ny image + gjenskaping)
+- «Oppdater alle» for alle containere med ventende oppdatering
+- «Sjekk» for å spørre Dockhand om nye images akkurat nå
+- Start / stopp / omstart med bekreftelse
+- Container-detaljer og loggvisning med auto-oppdatering
+- Bytt mellom flere Docker-miljøer direkte fra hjem-skjermen
+- API-token lagres kryptert på telefonen (Android Keystore)
+
+Appen snakker direkte fra telefonen til din egen Dockhand-server via Dockhands
+offentlige REST-API og en personlig API-token (dh_...). Ingen tredjepart er
+involvert. Opprett en token i Dockhand under Profile → API tokens.
+
+Dette prosjektet er ikke tilknyttet Finsys/Dockhand.

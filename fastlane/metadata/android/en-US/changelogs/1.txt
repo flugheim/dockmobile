@@ -1,0 +1,2 @@
+First F-Droid release: container list, one-tap updates, update-all,
+update check, start/stop/restart, details, logs, environment switching.

@@ -1,0 +1,47 @@
+# UTKAST til F-Droid-metadata – ikke ferdig verifisert
+#
+# Slik brukes den:
+# 1. Gjør GitHub-repoet offentlig (F-Droid bygger kun fra offentlig kilde).
+# 2. Sjekk syntaks og feltnavn mot den offisielle referansen:
+#    https://f-droid.org/docs/Build_Metadata_Reference/
+#    og inklusjonsprosessen:
+#    https://f-droid.org/docs/Inclusion_How-To/
+# 3. Send filen som merge request til
+#    https://gitlab.com/fdroid/fdroiddata
+#    som metadata/no.flugheim.dockmobile.yml
+#
+# Forutsetninger i repoet (allerede på plass):
+# - MIT-lisens (LICENSE) med opphavsperson
+# - android/ generert med `npx expo prebuild` og sjekket inn
+# - versionCode i app.json (android.versionCode), versjonsnavn = package.json
+# - Ingen proprietære avhengigheter, ingen Google-tjenester,
+#   ingen OTA-oppdateringer (expo-updates er ikke installert)
+# - fastlane/metadata/android/{en-US,nb-NO}/ med beskrivelser og changelog
+
+Categories:
+  - System
+License: MIT
+AuthorName: Kenneth Flugheim
+WebSite: https://github.com/flugheim/dockmobile
+SourceCode: https://github.com/flugheim/dockmobile
+IssueTracker: https://github.com/flugheim/dockmobile/issues
+
+AutoName: Dockhand Mobil
+
+RepoType: git
+Repo: https://github.com/flugheim/dockmobile
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: android
+    gradle:
+      - yes
+    prebuild:
+      - npm ci --prefix=..
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1

@@ -42,6 +42,12 @@ Skriv så QR-koden med **Expo Go**-appen på Android (gratis i Google Play).
 Alle native moduler appen bruker er inkludert i Expo Go, så du trenger ingen
 spesialbygning for å teste.
 
+> **Tunnel-modus:** hvis telefonen ikke når PC-en over lokalnettet,
+> kjør `npx expo start --tunnel`. Ved første gangs bruk spør Expo om å
+> installere ngrok globalt (utenfor prosjektet) – det er proprietær
+> programvare som bevisst *ikke* ligger i prosjektets avhengigheter,
+> slik at repoet holder seg F-Droid-vennlig.
+
 ### 3. Koble til
 
 1. Skriv inn adressen til Dockhand, f.eks. `http://192.168.1.10:3000`
@@ -63,6 +69,43 @@ eas build --profile preview --platform android
 `preview`-profilen lager en **APK** du kan installere direkte på telefonen.
 `production` lager en **AAB** for Google Play. Første bygg tar 5–15 minutter; du
 får en lenke du åpner på telefonen for å installere.
+
+Versjonsnummer styres lokalt i `app.json` (`version` + `android.versionCode`) –
+øk `versionCode` med 1 for hver nye utgave, både for EAS og F-Droid.
+
+## F-Droid
+
+Repoet er forberedt for F-Droid: MIT-lisens, ingen proprietære avhengigheter,
+ingen Google-tjenester, ingen OTA-oppdateringer, `android/` generert med
+`npx expo prebuild` og sjekket inn, samt fastlane-metadata under
+`fastlane/metadata/android/`.
+
+### Bygge APK-en lokalt (samme som F-Droid gjør)
+
+Du trenger Android SDK (f.eks. via Android Studio):
+
+```bash
+npm ci
+npx expo prebuild --platform android   # regenerer android/ etter config-endringer
+cd android
+./gradlew assembleRelease
+```
+
+APK-en havner i `android/app/build/outputs/apk/release/`. Signer den med din
+egen keystore for distribusjon utenfor F-Droid.
+
+### Sende inn til F-Droid
+
+1. Gjør GitHub-repoet **offentlig** (F-Droid bygger kun fra offentlig kilde)
+2. Verifiser utkastet i `fdroid/no.flugheim.dockmobile.yml` mot
+   [Build Metadata Reference](https://f-droid.org/docs/Build_Metadata_Reference/)
+3. Send det som merge request til
+   [fdroiddata](https://gitlab.com/fdroid/fdroiddata) som
+   `metadata/no.flugheim.dockmobile.yml`
+
+Merk: F-Droid signerer med sin egen nøkkel. Har du EAS-bygget (`v1.0.0` fra
+GitHub-releases) installert fra før, må det avinstalleres før F-Droid-versjonen
+kan installeres – samme pakkenavn (`no.flugheim.dockmobile`), ulik signatur.
 
 ## Prosjektstruktur
 
@@ -102,7 +145,7 @@ Alle kall sender `Authorization: Bearer dh_...`.
   Bruk `http://` på lokalnettet, eller sett Dockhand bak en https-proxy
 - **Compose-stacks** og **statistikk** er ikke med i første versjon
 - Svarformene fra API-et varierer litt mellom Dockhand-versjoner; klienten
-  normaliserer derefter fleksibelt, men en svært uvanlig form kan kreve justering
+  normaliserer derfor fleksibelt, men en svært uvanlig form kan kreve justering
   i `src/api/client.ts`
 
 ## Utvikling

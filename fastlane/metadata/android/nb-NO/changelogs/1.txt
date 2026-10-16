@@ -1,0 +1,2 @@
+Første F-Droid-utgave: containerliste, én-trykks oppdatering, oppdater-alle,
+oppdateringssjekk, start/stopp/omstart, detaljer, logger, miljøbytte.

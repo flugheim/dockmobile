@@ -1,14 +1,15 @@
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, ErrorBanner } from '../../components/ui';
 import { useSettings } from '../../state/SettingsContext';
 import { extractUpdateIds } from '../../api/client';
 import type { Container } from '../../types';
-import { colors, radius, stateColor, stateLabel } from '../../theme';
+import { colors, radius, stateColor } from '../../theme';
+import { containerStateLabel } from '../../i18n/translations';
 
 export default function ContainerDetailScreen() {
-  const { client } = useSettings();
+  const { client, t, lang } = useSettings();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [container, setContainer] = useState<Container | null>(null);
@@ -25,7 +26,7 @@ export default function ContainerDetailScreen() {
       const found = list.find((c) => c.id === id);
       if (!found) {
         setContainer(null);
-        setError('Containeren ble ikke funnet.');
+        setError(t('detail_notFound'));
         return;
       }
       const updateIds = extractUpdateIds(pending);
@@ -34,7 +35,7 @@ export default function ContainerDetailScreen() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [client, id]);
+  }, [client, id, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -48,7 +49,7 @@ export default function ContainerDetailScreen() {
       await action();
       setTimeout(() => void load(), 1200);
     } catch (e) {
-      Alert.alert('Handling feilet', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -57,6 +58,7 @@ export default function ContainerDetailScreen() {
   if (error && !container) {
     return (
       <View style={styles.flex}>
+        <Stack.Screen options={{ title: t('nav_container') }} />
         <ErrorBanner message={error} onRetry={() => void load()} />
       </View>
     );
@@ -65,7 +67,8 @@ export default function ContainerDetailScreen() {
   if (!container) {
     return (
       <View style={[styles.flex, styles.center]}>
-        <Text style={styles.muted}>Laster …</Text>
+        <Stack.Screen options={{ title: t('nav_container') }} />
+        <Text style={styles.muted}>{t('detail_loading')}</Text>
       </View>
     );
   }
@@ -74,21 +77,22 @@ export default function ContainerDetailScreen() {
 
   return (
     <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
+      <Stack.Screen options={{ title: t('nav_container') }} />
       <View style={styles.header}>
         <View style={[styles.dot, { backgroundColor: stateColor(container.state) }]} />
         <Text style={styles.name}>{container.name}</Text>
         <View style={[styles.pill, { borderColor: stateColor(container.state) }]}>
           <Text style={[styles.pillText, { color: stateColor(container.state) }]}>
-            {stateLabel(container.state)}
+            {containerStateLabel(container.state, lang)}
           </Text>
         </View>
       </View>
 
       {container.updateAvailable ? (
         <View style={styles.updateBox}>
-          <Text style={styles.updateText}>⬆ En ny image er tilgjengelig</Text>
+          <Text style={styles.updateText}>{t('detail_updateAvailable')}</Text>
           <Button
-            label="Oppdater nå"
+            label={t('detail_updateNow')}
             small
             loading={busy}
             onPress={() => void runAction(() => client!.updateContainers([container.id]))}
@@ -100,14 +104,14 @@ export default function ContainerDetailScreen() {
       <View style={styles.actions}>
         {running ? (
           <Button
-            label="Stopp"
+            label={t('card_stop')}
             variant="danger"
             disabled={busy}
             onPress={() =>
-              Alert.alert(`Stoppe ${container.name}?`, '', [
-                { text: 'Avbryt', style: 'cancel' },
+              Alert.alert(t('confirmStopTitle', { name: container.name }), '', [
+                { text: t('common_cancel'), style: 'cancel' },
                 {
-                  text: 'Stopp',
+                  text: t('common_stop'),
                   style: 'destructive',
                   onPress: () => void runAction(() => client!.stopContainer(container.id)),
                 },
@@ -116,13 +120,13 @@ export default function ContainerDetailScreen() {
           />
         ) : (
           <Button
-            label="Start"
+            label={t('card_start')}
             disabled={busy}
             onPress={() => void runAction(() => client!.startContainer(container.id))}
           />
         )}
         <Button
-          label="Omstart"
+          label={t('card_restart')}
           variant="secondary"
           disabled={busy || !running}
           onPress={() => void runAction(() => client!.restartContainer(container.id))}
@@ -130,13 +134,13 @@ export default function ContainerDetailScreen() {
       </View>
 
       <View style={styles.infoCard}>
-        <Row label="Image" value={container.image} />
-        <Row label="ID" value={container.id} />
-        {container.statusText ? <Row label="Status" value={container.statusText} /> : null}
+        <Row label={t('detail_image')} value={container.image} />
+        <Row label={t('detail_id')} value={container.id} />
+        {container.statusText ? <Row label={t('detail_status')} value={container.statusText} /> : null}
       </View>
 
       <Button
-        label="Se logger"
+        label={t('detail_viewLogs')}
         variant="secondary"
         style={{ marginTop: 12 }}
         onPress={() =>

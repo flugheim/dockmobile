@@ -1,6 +1,6 @@
 /**
- * Global tilstand: tilkoblingsinnstillinger (URL + token + valgt miljø),
- * lagret sikkert på telefonen med expo-secure-store.
+ * Global tilstand: tilkoblingsinnstillinger (URL + token + valgt miljø)
+ * og språkvalg, lagret sikkert på telefonen med expo-secure-store.
  */
 
 import React, {
@@ -12,13 +12,30 @@ import React, {
   useState,
 } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { getLocales } from 'expo-localization';
 import { DockhandClient } from '../api/client';
+import {
+  resolveLang,
+  translate,
+  type AppLang,
+  type LangChoice,
+  type TransKey,
+} from '../i18n/translations';
 import type { ConnectionSettings, DockhandEnvironment } from '../types';
 
 const KEY_URL = 'dockhand.baseUrl';
 const KEY_TOKEN = 'dockhand.token';
 const KEY_ENV_ID = 'dockhand.envId';
 const KEY_ENV_NAME = 'dockhand.envName';
+const KEY_LANG = 'dockhand.langChoice';
+
+function deviceLanguageCode(): string {
+  try {
+    return getLocales()[0]?.languageCode ?? 'en';
+  } catch {
+    return 'en';
+  }
+}
 
 interface SettingsValue {
   status: 'loading' | 'disconnected' | 'connected';
@@ -31,6 +48,13 @@ interface SettingsValue {
   selectEnvironment: (env: DockhandEnvironment) => Promise<void>;
   disconnect: () => Promise<void>;
   error: string | null;
+  /** Brukerens språkvalg ('system' følger telefonen). */
+  langChoice: LangChoice;
+  /** Effektivt språk etter oppløsning mot telefonens språk. */
+  lang: AppLang;
+  setLangChoice: (choice: LangChoice) => Promise<void>;
+  /** Oversett en nøkkel til gjeldende språk. */
+  t: (key: TransKey, vars?: Record<string, string | number>) => string;
 }
 
 const SettingsContext = createContext<SettingsValue | null>(null);
@@ -46,17 +70,32 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [environments, setEnvironments] = useState<DockhandEnvironment[]>([]);
   const [status, setStatus] = useState<'loading' | 'disconnected' | 'connected'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [langChoice, setLangChoiceState] = useState<LangChoice>('system');
+
+  const lang = useMemo(
+    () => resolveLang(langChoice, deviceLanguageCode()),
+    [langChoice],
+  );
+
+  const t = useCallback(
+    (key: TransKey, vars?: Record<string, string | number>) => translate(lang, key, vars),
+    [lang],
+  );
 
   // Les lagrede innstillinger ved oppstart
   useEffect(() => {
     (async () => {
       try {
-        const [url, token, envId, envName] = await Promise.all([
+        const [url, token, envId, envName, storedLang] = await Promise.all([
           SecureStore.getItemAsync(KEY_URL),
           SecureStore.getItemAsync(KEY_TOKEN),
           SecureStore.getItemAsync(KEY_ENV_ID),
           SecureStore.getItemAsync(KEY_ENV_NAME),
+          SecureStore.getItemAsync(KEY_LANG),
         ]);
+        if (storedLang === 'en' || storedLang === 'nb' || storedLang === 'system') {
+          setLangChoiceState(storedLang);
+        }
         if (url && token) {
           setSettings({
             baseUrl: url,
@@ -86,13 +125,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const baseUrl = normalizeUrl(rawUrl);
       if (!token.trim()) {
-        setError('Lim inn en API-token (starter med dh_).');
+        setError(t('connect_missingToken'));
         throw new Error('missing token');
       }
       const probe = new DockhandClient({ baseUrl, token, timeoutMs: 15000 });
       const envs = await probe.getEnvironments();
       if (envs.length === 0) {
-        setError('Tilkoblet, men ingen miljøer å vise.');
+        setError(t('connect_noEnvironments'));
         throw new Error('no environments');
       }
       const chosen = env ?? envs[0];
@@ -107,7 +146,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       setEnvironments(envs);
       setStatus('connected');
     },
-    [persist],
+    [persist, t],
   );
 
   const selectEnvironment = useCallback(
@@ -135,6 +174,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setStatus('disconnected');
   }, []);
 
+  const setLangChoice = useCallback(async (choice: LangChoice) => {
+    await SecureStore.setItemAsync(KEY_LANG, choice);
+    setLangChoiceState(choice);
+  }, []);
+
   const client = useMemo(
     () => (settings ? new DockhandClient({
       baseUrl: settings.baseUrl,
@@ -145,8 +189,34 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo<SettingsValue>(
-    () => ({ status, settings, environments, client, connect, selectEnvironment, disconnect, error }),
-    [status, settings, environments, client, connect, selectEnvironment, disconnect, error],
+    () => ({
+      status,
+      settings,
+      environments,
+      client,
+      connect,
+      selectEnvironment,
+      disconnect,
+      error,
+      langChoice,
+      lang,
+      setLangChoice,
+      t,
+    }),
+    [
+      status,
+      settings,
+      environments,
+      client,
+      connect,
+      selectEnvironment,
+      disconnect,
+      error,
+      langChoice,
+      lang,
+      setLangChoice,
+      t,
+    ],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

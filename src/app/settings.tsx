@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import { Stack } from 'expo-router';
+import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
+import type { LangChoice } from '../i18n/translations';
 import { colors, radius } from '../theme';
 
 export default function SettingsScreen() {
-  const { settings, environments, selectEnvironment, disconnect, client } = useSettings();
+  const { settings, environments, selectEnvironment, disconnect, client, t, langChoice, setLangChoice } =
+    useSettings();
   const [testing, setTesting] = useState(false);
 
   async function testConnection() {
@@ -14,38 +17,49 @@ export default function SettingsScreen() {
     try {
       const envs = await client.getEnvironments();
       Alert.alert(
-        'Tilkobling OK',
+        t('settings_testOk'),
         envs.length === 1
-          ? `Tilkoblet ${settings?.baseUrl} (${envs[0].name}).`
-          : `Tilkoblet ${settings?.baseUrl} – ${envs.length} miljøer.`,
+          ? t('settings_connectedOne', { url: settings?.baseUrl ?? '', env: envs[0].name })
+          : t('settings_connectedMany', {
+              url: settings?.baseUrl ?? '',
+              n: envs.length,
+            }),
       );
     } catch (e) {
-      Alert.alert('Tilkobling feilet', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('settings_testFailed'), e instanceof Error ? e.message : String(e));
     } finally {
       setTesting(false);
     }
   }
 
   function confirmDisconnect() {
-    Alert.alert(
-      'Fjerne tilkobling?',
-      'Token og adresse slettes fra telefonen.',
-      [
-        { text: 'Avbryt', style: 'cancel' },
-        { text: 'Fjern', style: 'destructive', onPress: () => void disconnect() },
-      ],
-    );
+    Alert.alert(t('settings_confirmRemoveTitle'), t('settings_confirmRemoveMessage'), [
+      { text: t('common_cancel'), style: 'cancel' },
+      { text: t('settings_removeConfirm'), style: 'destructive', onPress: () => void disconnect() },
+    ]);
   }
+
+  const langLabel = (choice: LangChoice): string => {
+    switch (choice) {
+      case 'nb':
+        return 'Norsk';
+      case 'en':
+        return 'English';
+      default:
+        return t('settings_langSystem');
+    }
+  };
 
   return (
     <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
-      <Text style={styles.groupTitle}>Tilkobling</Text>
+      <Stack.Screen options={{ title: t('nav_settings') }} />
+      <Text style={styles.groupTitle}>{t('settings_connection')}</Text>
       <View style={styles.card}>
-        <Row label="Server" value={settings?.baseUrl ?? '–'} />
-        <Row label="Miljø" value={settings?.envName ?? '–'} />
-        <Row label="Token" value={'dh_…' + (settings?.token?.slice(-4) ?? '')} />
+        <Row label={t('settings_server')} value={settings?.baseUrl ?? '–'} />
+        <Row label={t('settings_environment')} value={settings?.envName ?? '–'} />
+        <Row label={t('settings_token')} value={'dh_…' + (settings?.token?.slice(-4) ?? '')} />
         <Button
-          label="Test tilkobling"
+          label={t('settings_test')}
           variant="secondary"
           loading={testing}
           onPress={() => void testConnection()}
@@ -53,9 +67,24 @@ export default function SettingsScreen() {
         />
       </View>
 
+      <Text style={styles.groupTitle}>{t('settings_language')}</Text>
+      <View style={styles.card}>
+        <Text style={styles.note}>{t('settings_langNote')}</Text>
+        {(['system', 'nb', 'en'] as LangChoice[]).map((choice) => (
+          <Button
+            key={choice}
+            label={langChoice === choice ? `✓ ${langLabel(choice)}` : langLabel(choice)}
+            variant={langChoice === choice ? 'primary' : 'secondary'}
+            onPress={() => void setLangChoice(choice)}
+            style={{ marginTop: 8 }}
+            testID={`lang-${choice}`}
+          />
+        ))}
+      </View>
+
       {environments.length > 1 ? (
         <>
-          <Text style={styles.groupTitle}>Bytt miljø</Text>
+          <Text style={styles.groupTitle}>{t('settings_switchEnv')}</Text>
           <View style={styles.card}>
             {environments.map((env) => (
               <Button
@@ -70,20 +99,14 @@ export default function SettingsScreen() {
         </>
       ) : null}
 
-      <Text style={styles.groupTitle}>Om appen</Text>
+      <Text style={styles.groupTitle}>{t('settings_about')}</Text>
       <View style={styles.card}>
-        <Text style={styles.about}>
-          Dockhand-mobil er en uavhengig klient for Dockhand. All kommunikasjon går direkte fra
-          telefonen til din egen server – ingen data sendes til tredjepart.
-        </Text>
-        <Text style={styles.about}>
-          Bruker du et selvsignert sertifikat, åpne serveren én gang i nettleseren på telefonen og
-          godta det, eller kjør Dockhand bak en https-proxy.
-        </Text>
+        <Text style={styles.about}>{t('settings_about1')}</Text>
+        <Text style={styles.about}>{t('settings_about2')}</Text>
       </View>
 
       <Button
-        label="Fjern tilkobling"
+        label={t('settings_remove')}
         variant="danger"
         onPress={confirmDisconnect}
         style={{ marginTop: 20 }}
@@ -126,4 +149,5 @@ const styles = StyleSheet.create({
   rowLabel: { color: colors.textDim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   rowValue: { color: colors.text, fontSize: 14 },
   about: { color: colors.textDim, fontSize: 13, lineHeight: 19 },
+  note: { color: colors.textDim, fontSize: 13, lineHeight: 19 },
 });

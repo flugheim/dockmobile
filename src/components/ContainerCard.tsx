@@ -1,8 +1,9 @@
-import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Container } from '../types';
 import { Button } from './ui';
-import { colors, radius, stateColor, stateLabel } from '../theme';
+import { colors, radius, stateColor } from '../theme';
+import { containerStateLabel } from '../i18n/translations';
+import { useSettings } from '../state/SettingsContext';
 
 interface Props {
   container: Container;
@@ -23,6 +24,7 @@ export function ContainerCard({
   onRestart,
   onUpdate,
 }: Props) {
+  const { t, lang } = useSettings();
   const running = c.state === 'running';
   return (
     <Pressable
@@ -36,7 +38,7 @@ export function ContainerCard({
         </Text>
         <View style={[styles.pill, { borderColor: stateColor(c.state) }]}>
           <Text style={[styles.pillText, { color: stateColor(c.state) }]}>
-            {stateLabel(c.state)}
+            {containerStateLabel(c.state, lang)}
           </Text>
         </View>
       </View>
@@ -52,9 +54,9 @@ export function ContainerCard({
 
       {c.updateAvailable ? (
         <View style={styles.updateRow}>
-          <Text style={styles.updateBadge}>⬆ Oppdatering tilgjengelig</Text>
+          <Text style={styles.updateBadge}>{t('card_updateAvailable')}</Text>
           <Button
-            label="Oppdater"
+            label={t('card_update')}
             onPress={onUpdate}
             loading={busy}
             small
@@ -65,12 +67,12 @@ export function ContainerCard({
 
       <View style={styles.actions}>
         {running ? (
-          <Button label="Stopp" variant="secondary" small onPress={onStop} disabled={busy} />
+          <Button label={t('card_stop')} variant="secondary" small onPress={onStop} disabled={busy} />
         ) : (
-          <Button label="Start" variant="secondary" small onPress={onStart} disabled={busy} />
+          <Button label={t('card_start')} variant="secondary" small onPress={onStart} disabled={busy} />
         )}
         <Button
-          label="Omstart"
+          label={t('card_restart')}
           variant="secondary"
           small
           onPress={onRestart}

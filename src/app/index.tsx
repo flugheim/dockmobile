@@ -8,26 +8,27 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Redirect, useRouter, useFocusEffect } from 'expo-router';
+import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { extractUpdateIds } from '../api/client';
 import { ContainerCard } from '../components/ContainerCard';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
+import type { TransKey } from '../i18n/translations';
 import type { Container, DockhandEnvironment } from '../types';
 import { colors, radius } from '../theme';
 
 type Filter = 'all' | 'running' | 'stopped' | 'updates';
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'Alle' },
-  { key: 'running', label: 'Kjører' },
-  { key: 'stopped', label: 'Stoppet' },
-  { key: 'updates', label: 'Oppdatering' },
+const FILTERS: { key: Filter; labelKey: TransKey }[] = [
+  { key: 'all', labelKey: 'filter_all' },
+  { key: 'running', labelKey: 'filter_running' },
+  { key: 'stopped', labelKey: 'filter_stopped' },
+  { key: 'updates', labelKey: 'filter_updates' },
 ];
 
 export default function ContainersScreen() {
-  const { client, settings, status, environments, selectEnvironment } = useSettings();
+  const { client, settings, status, environments, selectEnvironment, t, lang } = useSettings();
   const router = useRouter();
   const [containers, setContainers] = useState<Container[]>([]);
   const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
@@ -97,7 +98,7 @@ export default function ContainersScreen() {
       // Gi serveren et øyeblikk før vi leser tilstanden igjen
       setTimeout(() => void load('refresh'), 1200);
     } catch (e) {
-      Alert.alert('Handling feilet', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
       setBusyId(null);
     }
   }
@@ -109,8 +110,10 @@ export default function ContainersScreen() {
     try {
       await client.updateContainers(ids);
       Alert.alert(
-        'Oppdatering startet',
-        `${ids.length === 1 ? 'Containeren' : `${ids.length} containere`} oppdateres på serveren. Listen oppdateres fortløpende.`,
+        t('updateStartedTitle'),
+        ids.length === 1
+          ? t('updateStarted_one')
+          : t('updateStarted_other', { n: ids.length }),
       );
       // Følg med på status mens oppdateringen kjører
       let ticks = 0;
@@ -124,7 +127,7 @@ export default function ContainersScreen() {
         }
       }, 5000);
     } catch (e) {
-      Alert.alert('Oppdatering feilet', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('updateFailed'), e instanceof Error ? e.message : String(e));
       setBusyId(null);
       setUpdatingAll(false);
     }
@@ -154,7 +157,7 @@ export default function ContainersScreen() {
         }
       }, 4000);
     } catch (e) {
-      Alert.alert('Sjekk feilet', e instanceof Error ? e.message : String(e));
+      Alert.alert(t('checkFailed'), e instanceof Error ? e.message : String(e));
       setCheckingUpdates(false);
     }
   }
@@ -176,12 +179,14 @@ export default function ContainersScreen() {
 
   function confirmUpdateAll() {
     Alert.alert(
-      'Oppdatere alle?',
-      `${withUpdates.length} containere trekker ny image og går ned en kort stund.`,
+      t('confirmUpdateAllTitle'),
+      withUpdates.length === 1
+        ? t('confirmUpdateAll_one')
+        : t('confirmUpdateAll_other', { n: withUpdates.length }),
       [
-        { text: 'Avbryt', style: 'cancel' },
+        { text: t('common_cancel'), style: 'cancel' },
         {
-          text: 'Oppdater alle',
+          text: t('updateAll'),
           style: 'destructive',
           onPress: () => void updateContainers(withUpdates.map((c) => c.id)),
         },
@@ -204,13 +209,17 @@ export default function ContainersScreen() {
   if (loading && containers.length === 0) {
     return (
       <View style={[styles.flex, styles.center]}>
-        <Text style={styles.muted}>Laster containere …</Text>
+        <Stack.Screen options={{ title: t('nav_containers') }} />
+        <Text style={styles.muted}>{t('list_loading')}</Text>
       </View>
     );
   }
 
+  const timeLocale = lang === 'nb' ? 'nb-NO' : 'en-GB';
+
   return (
     <View style={styles.flex}>
+      <Stack.Screen options={{ title: t('nav_containers') }} />
       <View style={styles.topBar}>
         <Pressable
           style={styles.envButton}
@@ -219,24 +228,29 @@ export default function ContainersScreen() {
         >
           <View style={styles.topBarText}>
             <Text style={styles.envName} numberOfLines={1}>
-              {settings?.envName ?? 'Miljø'} ⌄
+              {settings?.envName ?? t('list_envFallback')} ⌄
             </Text>
             <Text style={styles.meta}>
               {lastUpdated
-                ? `Oppdatert ${lastUpdated.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })} · trykk for å bytte`
+                ? t('list_updatedAt', {
+                    time: lastUpdated.toLocaleTimeString(timeLocale, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }),
+                  })
                 : ' '}
             </Text>
           </View>
         </Pressable>
         <View style={styles.topBarActions}>
           <Button
-            label="Innstillinger"
+            label={t('list_settings')}
             variant="ghost"
             small
             onPress={() => router.push('/settings')}
           />
           <Button
-            label="Sjekk"
+            label={t('list_check')}
             variant="secondary"
             small
             loading={checkingUpdates}
@@ -257,11 +271,12 @@ export default function ContainersScreen() {
       {withUpdates.length > 0 ? (
         <View style={styles.updateBanner}>
           <Text style={styles.updateBannerText}>
-            {withUpdates.length} container{withUpdates.length === 1 ? ' har' : 'e har'} oppdatering
-            tilgjengelig
+            {withUpdates.length === 1
+              ? t('banner_one')
+              : t('banner_other', { n: withUpdates.length })}
           </Text>
           <Button
-            label="Oppdater alle"
+            label={t('updateAll')}
             small
             loading={updatingAll}
             onPress={confirmUpdateAll}
@@ -274,7 +289,7 @@ export default function ContainersScreen() {
         {FILTERS.map((f) => (
           <Button
             key={f.key}
-            label={f.label}
+            label={t(f.labelKey)}
             variant={filter === f.key ? 'primary' : 'secondary'}
             small
             onPress={() => setFilter(f.key)}
@@ -297,11 +312,9 @@ export default function ContainersScreen() {
         }
         ListEmptyComponent={
           <EmptyState
-            title={filter === 'updates' ? 'Ingen oppdateringer' : 'Ingen containere'}
+            title={filter === 'updates' ? t('empty_updates') : t('empty_containers')}
             hint={
-              filter === 'updates'
-                ? 'Trykk "Sjekk" for å lete etter nye images nå.'
-                : 'Dra ned for å laste listen på nytt.'
+              filter === 'updates' ? t('empty_updatesHint') : t('empty_containersHint')
             }
           />
         }
@@ -312,10 +325,10 @@ export default function ContainersScreen() {
             onPress={() => router.push(`/container/${item.id}`)}
             onStart={() => void runAction(item.id, () => client!.startContainer(item.id))}
             onStop={() => {
-              Alert.alert(`Stoppe ${item.name}?`, 'Containeren stoppes nå.', [
-                { text: 'Avbryt', style: 'cancel' },
+              Alert.alert(t('confirmStopTitle', { name: item.name }), t('confirmStopMessage'), [
+                { text: t('common_cancel'), style: 'cancel' },
                 {
-                  text: 'Stopp',
+                  text: t('common_stop'),
                   style: 'destructive',
                   onPress: () => void runAction(item.id, () => client!.stopContainer(item.id)),
                 },

@@ -14,7 +14,7 @@ import { useSettings } from '../state/SettingsContext';
 import { colors, radius } from '../theme';
 
 export default function ConnectScreen() {
-  const { connect, error } = useSettings();
+  const { connect, error, t } = useSettings();
   const router = useRouter();
   const [url, setUrl] = useState('');
   const [token, setToken] = useState('');
@@ -33,7 +33,7 @@ export default function ConnectScreen() {
         setLocalError(
           msg.includes('Network') || msg.includes('nå')
             ? msg
-            : `Kunne ikke koble til: ${msg}`,
+            : `${t('connect_failedPrefix')}${msg}`,
         );
       }
     } finally {
@@ -51,12 +51,10 @@ export default function ConnectScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.logo}>⚓</Text>
         <Text style={styles.title}>Dockhand</Text>
-        <Text style={styles.subtitle}>
-          Koble til din egen Dockhand-server for å styre og oppdatere containere.
-        </Text>
+        <Text style={styles.subtitle}>{t('connect_subtitle')}</Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Serveradresse</Text>
+          <Text style={styles.label}>{t('connect_server')}</Text>
           <TextInput
             style={styles.input}
             value={url}
@@ -68,7 +66,7 @@ export default function ConnectScreen() {
             keyboardType="url"
           />
 
-          <Text style={styles.label}>API-token</Text>
+          <Text style={styles.label}>{t('connect_token')}</Text>
           <TextInput
             style={styles.input}
             value={token}
@@ -79,15 +77,12 @@ export default function ConnectScreen() {
             autoCorrect={false}
             secureTextEntry
           />
-          <Text style={styles.hint}>
-            Lag en token i Dockhand: Profile → API tokens → Generate token. Token lagres
-            kryptert på telefonen.
-          </Text>
+          <Text style={styles.hint}>{t('connect_tokenHint')}</Text>
 
           {shownError ? <ErrorBanner message={shownError} /> : null}
 
           <Button
-            label={busy ? 'Kobler til …' : 'Koble til'}
+            label={busy ? t('connect_connecting') : t('connect_button')}
             onPress={onSubmit}
             loading={busy}
             disabled={!url.trim() || !token.trim()}

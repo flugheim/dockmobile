@@ -9,6 +9,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { colors, radius } from '../theme';
+import { useSettings } from '../state/SettingsContext';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
@@ -120,11 +121,12 @@ export function ErrorBanner({
   message: string;
   onRetry?: () => void;
 }) {
+  const { t } = useSettings();
   return (
     <View style={err.wrap}>
       <Text style={err.text}>{message}</Text>
       {onRetry ? (
-        <Button label="Prøv igjen" variant="secondary" small onPress={onRetry} />
+        <Button label={t('common_retry')} variant="secondary" small onPress={onRetry} />
       ) : null}
     </View>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { DockhandEnvironment } from '../types';
+import { useSettings } from '../state/SettingsContext';
 import { colors, radius } from '../theme';
 
 interface Props {
@@ -19,14 +20,15 @@ export function EnvironmentPicker({
   onSelect,
   onClose,
 }: Props) {
+  const { t } = useSettings();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.sheet}>
         <View style={styles.handle} />
-        <Text style={styles.title}>Velg miljø</Text>
+        <Text style={styles.title}>{t('settings_switchEnv')}</Text>
         {environments.length === 0 ? (
-          <Text style={styles.empty}>Ingen miljøer funnet.</Text>
+          <Text style={styles.empty}>{t('env_empty')}</Text>
         ) : (
           environments.map((env) => {
             const active = env.id === currentEnvId;
@@ -51,7 +53,7 @@ export function EnvironmentPicker({
           })
         )}
         <Pressable style={styles.cancel} onPress={onClose}>
-          <Text style={styles.cancelText}>Avbryt</Text>
+          <Text style={styles.cancelText}>{t('common_cancel')}</Text>
         </Pressable>
       </View>
     </Modal>

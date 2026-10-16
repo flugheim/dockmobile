@@ -20,6 +20,7 @@ rask og enkel i daglig bruk, med fokus på én ting: **å holde containerne oppd
 - **Loggvisning** med auto-oppdatering og pause
 - **Flere miljøer** – velg miljø i innstillinger hvis du har flere Docker-verter
 - Token lagres kryptert på telefonen (Android Keystore via `expo-secure-store`)
+- **Språk:** følger telefonens språk (norsk/engelsk), kan overstyres i innstillinger
 
 ## Kom i gang
 

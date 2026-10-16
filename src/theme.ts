@@ -39,25 +39,3 @@ export function stateColor(state: string): string {
       return colors.textDim;
   }
 }
-
-/** Norsk tekst for container-tilstand. */
-export function stateLabel(state: string): string {
-  switch (state) {
-    case 'running':
-      return 'Kjører';
-    case 'exited':
-      return 'Stoppet';
-    case 'paused':
-      return 'Pauset';
-    case 'created':
-      return 'Opprettet';
-    case 'restarting':
-      return 'Starter om';
-    case 'dead':
-      return 'Død';
-    case 'removing':
-      return 'Fjernes';
-    default:
-      return state;
-  }
-}

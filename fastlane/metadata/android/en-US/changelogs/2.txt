@@ -1,0 +1,4 @@
+Renamed to DockMobile. Language selection (English/Norsk with system
+default). Environment list is now refreshed from the server on startup
+and when switching. F-Droid preparations: MIT license, prebuilt android/
+project, fastlane metadata.

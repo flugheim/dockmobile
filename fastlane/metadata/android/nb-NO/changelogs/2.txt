@@ -1,0 +1,3 @@
+Omdøpt til DockMobile. Språkvalg (norsk/engelsk med systemstandard).
+Miljølisten hentes nå fersk fra serveren ved oppstart og ved bytte.
+F-Droid-forberedelser: MIT-lisens, ferdig android/-prosjekt, fastlane-metadata.

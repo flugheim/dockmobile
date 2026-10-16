@@ -124,6 +124,7 @@ const en = {
   settings_langSystem: 'System',
   settings_langNote: "Follows the phone's language. You can override it here.",
   env_empty: 'No environments found.',
+  env_loading: 'Loading environments …',
 } as const;
 
 export type TransKey = keyof typeof en;
@@ -229,6 +230,7 @@ const nb: Record<TransKey, string> = {
   settings_langSystem: 'System',
   settings_langNote: 'Følger telefonens språk. Du kan overstyre det her.',
   env_empty: 'Ingen miljøer funnet.',
+  env_loading: 'Laster miljøer …',
 };
 
 export { en, nb };

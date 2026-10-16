@@ -28,7 +28,7 @@ const FILTERS: { key: Filter; labelKey: TransKey }[] = [
 ];
 
 export default function ContainersScreen() {
-  const { client, settings, status, environments, selectEnvironment, t, lang } = useSettings();
+  const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments, environmentsLoading } = useSettings();
   const router = useRouter();
   const [containers, setContainers] = useState<Container[]>([]);
   const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
@@ -73,7 +73,8 @@ export default function ContainersScreen() {
   useFocusEffect(
     useCallback(() => {
       void load('initial');
-    }, [load]),
+      void refreshEnvironments();
+    }, [load, refreshEnvironments]),
   );
 
   // Auto-oppdatering av listen mens skjermen er åpen
@@ -223,7 +224,10 @@ export default function ContainersScreen() {
       <View style={styles.topBar}>
         <Pressable
           style={styles.envButton}
-          onPress={() => setPickerOpen(true)}
+          onPress={() => {
+            void refreshEnvironments();
+            setPickerOpen(true);
+          }}
           testID="env-switcher"
         >
           <View style={styles.topBarText}>
@@ -264,6 +268,7 @@ export default function ContainersScreen() {
         visible={pickerOpen}
         environments={environments}
         currentEnvId={settings?.envId ?? null}
+        loading={environmentsLoading}
         onSelect={(env) => void onSelectEnvironment(env)}
         onClose={() => setPickerOpen(false)}
       />

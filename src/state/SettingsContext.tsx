@@ -48,6 +48,10 @@ interface SettingsValue {
   selectEnvironment: (env: DockhandEnvironment) => Promise<void>;
   disconnect: () => Promise<void>;
   error: string | null;
+  /** True mens miljølisten hentes fra serveren. */
+  environmentsLoading: boolean;
+  /** Hent miljølisten på nytt fra serveren. */
+  refreshEnvironments: () => Promise<void>;
   /** Brukerens språkvalg ('system' følger telefonen). */
   langChoice: LangChoice;
   /** Effektivt språk etter oppløsning mot telefonens språk. */
@@ -82,6 +86,50 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [lang],
   );
 
+  const persist = useCallback(async (s: ConnectionSettings) => {
+    await SecureStore.setItemAsync(KEY_URL, s.baseUrl);
+    await SecureStore.setItemAsync(KEY_TOKEN, s.token);
+    if (s.envId) await SecureStore.setItemAsync(KEY_ENV_ID, s.envId);
+    if (s.envName) await SecureStore.setItemAsync(KEY_ENV_NAME, s.envName);
+  }, []);
+
+  const [environmentsLoading, setEnvironmentsLoading] = useState(false);
+
+  /**
+   * Hent miljølisten på nytt fra serveren. Hvis det lagrede miljøet ikke
+   * finnes lenger, falles det tilbake til det første miljøet slik at
+   * appen ikke står igjen med et ugyldig valg.
+   */
+  const loadEnvironments = useCallback(
+    async (baseUrl: string, token: string, currentEnvId: string | null) => {
+      setEnvironmentsLoading(true);
+      try {
+        const probe = new DockhandClient({ baseUrl, token, timeoutMs: 15000 });
+        const envs = await probe.getEnvironments();
+        setEnvironments(envs);
+        if (envs.length > 0 && currentEnvId && !envs.some((e) => e.id === currentEnvId)) {
+          const fallback = envs[0];
+          setSettings((prev) => {
+            if (!prev) return prev;
+            const next = { ...prev, envId: fallback.id, envName: fallback.name };
+            void persist(next);
+            return next;
+          });
+        }
+      } catch {
+        // Behold forrige liste ved nettfeil – bedre enn en tom liste.
+      } finally {
+        setEnvironmentsLoading(false);
+      }
+    },
+    [persist],
+  );
+
+  const refreshEnvironments = useCallback(async () => {
+    if (!settings) return;
+    await loadEnvironments(settings.baseUrl, settings.token, settings.envId);
+  }, [settings, loadEnvironments]);
+
   // Les lagrede innstillinger ved oppstart
   useEffect(() => {
     (async () => {
@@ -104,6 +152,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             envName: envName ?? null,
           });
           setStatus('connected');
+          // Miljølisten er ikke lagret – hent den fersk fra serveren.
+          void loadEnvironments(url, token, envId ?? null);
         } else {
           setStatus('disconnected');
         }
@@ -111,14 +161,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setStatus('disconnected');
       }
     })();
-  }, []);
-
-  const persist = useCallback(async (s: ConnectionSettings) => {
-    await SecureStore.setItemAsync(KEY_URL, s.baseUrl);
-    await SecureStore.setItemAsync(KEY_TOKEN, s.token);
-    if (s.envId) await SecureStore.setItemAsync(KEY_ENV_ID, s.envId);
-    if (s.envName) await SecureStore.setItemAsync(KEY_ENV_NAME, s.envName);
-  }, []);
+  }, [loadEnvironments]);
 
   const connect = useCallback(
     async (rawUrl: string, token: string, env?: DockhandEnvironment | null) => {
@@ -202,6 +245,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       lang,
       setLangChoice,
       t,
+      environmentsLoading,
+      refreshEnvironments,
     }),
     [
       status,
@@ -216,6 +261,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       lang,
       setLangChoice,
       t,
+      environmentsLoading,
+      refreshEnvironments,
     ],
   );
 

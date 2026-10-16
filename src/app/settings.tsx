@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router';
-import { useState } from 'react';
+import { Stack, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
@@ -7,9 +7,15 @@ import type { LangChoice } from '../i18n/translations';
 import { colors, radius } from '../theme';
 
 export default function SettingsScreen() {
-  const { settings, environments, selectEnvironment, disconnect, client, t, langChoice, setLangChoice } =
+  const { settings, environments, selectEnvironment, disconnect, client, t, langChoice, setLangChoice, refreshEnvironments } =
     useSettings();
   const [testing, setTesting] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshEnvironments();
+    }, [refreshEnvironments]),
+  );
 
   async function testConnection() {
     if (!client) return;

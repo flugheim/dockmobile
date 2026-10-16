@@ -8,6 +8,7 @@ interface Props {
   visible: boolean;
   environments: DockhandEnvironment[];
   currentEnvId: string | null;
+  loading: boolean;
   onSelect: (env: DockhandEnvironment) => void;
   onClose: () => void;
 }
@@ -19,6 +20,7 @@ export function EnvironmentPicker({
   currentEnvId,
   onSelect,
   onClose,
+  loading,
 }: Props) {
   const { t } = useSettings();
   return (
@@ -27,7 +29,9 @@ export function EnvironmentPicker({
       <View style={styles.sheet}>
         <View style={styles.handle} />
         <Text style={styles.title}>{t('settings_switchEnv')}</Text>
-        {environments.length === 0 ? (
+        {loading && environments.length === 0 ? (
+          <Text style={styles.empty}>{t('env_loading')}</Text>
+        ) : environments.length === 0 ? (
           <Text style={styles.empty}>{t('env_empty')}</Text>
         ) : (
           environments.map((env) => {

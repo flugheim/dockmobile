@@ -106,7 +106,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       try {
         const probe = new DockhandClient({ baseUrl, token, timeoutMs: 15000 });
         const envs = await probe.getEnvironments();
-        setEnvironments(envs);
+        setEnvironments((prev) => {
+          if (
+            prev.length === envs.length &&
+            prev.every((e, i) => e.id === envs[i]?.id && e.name === envs[i]?.name)
+          ) {
+            return prev;
+          }
+          return envs;
+        });
         if (envs.length > 0 && currentEnvId && !envs.some((e) => e.id === currentEnvId)) {
           const fallback = envs[0];
           setSettings((prev) => {

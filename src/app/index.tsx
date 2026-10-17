@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
@@ -22,7 +22,6 @@ export default function EnvironmentsDashboardScreen() {
     selectEnvironment,
     t,
     refreshEnvironments,
-    environmentsLoading,
   } = useSettings();
   const router = useRouter();
 
@@ -94,36 +93,34 @@ export default function EnvironmentsDashboardScreen() {
     [],
   );
 
+  const inFlightRef = useRef(false);
+  const environmentsRef = useRef(environments);
+  const settingsRef = useRef(settings);
+
+  useEffect(() => {
+    environmentsRef.current = environments;
+  }, [environments]);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   /**
    * Laster overviews for alle kjente miljøer.
    */
   const loadAll = useCallback(
     async (showRefreshIndicator = false) => {
-      if (!settings || environments.length === 0) return;
-      if (showRefreshIndicator) setRefreshing(true);
+      const currentEnvs = environmentsRef.current;
+      const currentSettings = settingsRef.current;
+      if (!currentSettings || currentEnvs.length === 0) return;
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
 
-      // Marker alle som loading dersom vi ikke har data ennå
-      setOverviews((prev) => {
-        const next = { ...prev };
-        for (const env of environments) {
-          if (!next[env.id]) {
-            next[env.id] = {
-              environment: env,
-              totalContainers: 0,
-              runningContainers: 0,
-              stoppedContainers: 0,
-              updatesAvailable: 0,
-              loading: true,
-              error: null,
-            };
-          }
-        }
-        return next;
-      });
+      if (showRefreshIndicator) setRefreshing(true);
 
       try {
         const results = await Promise.all(
-          environments.map((env) => fetchEnvOverview(env, settings)),
+          currentEnvs.map((env: DockhandEnvironment) => fetchEnvOverview(env, currentSettings)),
         );
 
         const newMap: Record<string, EnvironmentOverview> = {};
@@ -135,16 +132,18 @@ export default function EnvironmentsDashboardScreen() {
       } catch (err) {
         setGlobalError(err instanceof Error ? err.message : String(err));
       } finally {
+        inFlightRef.current = false;
         setRefreshing(false);
       }
     },
-    [environments, settings, fetchEnvOverview],
+    [fetchEnvOverview],
   );
 
   useFocusEffect(
     useCallback(() => {
-      void refreshEnvironments();
-      void loadAll();
+      void refreshEnvironments().then(() => {
+        void loadAll();
+      });
     }, [refreshEnvironments, loadAll]),
   );
 
@@ -278,10 +277,11 @@ export default function EnvironmentsDashboardScreen() {
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing || environmentsLoading}
+            refreshing={refreshing}
             onRefresh={() => {
-              void refreshEnvironments();
-              void loadAll(true);
+              void refreshEnvironments().then(() => {
+                void loadAll(true);
+              });
             }}
             tintColor={colors.accent}
           />

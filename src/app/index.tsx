@@ -1,346 +1,302 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
-import { extractUpdateIds } from '../api/client';
-import { ContainerCard } from '../components/ContainerCard';
-import { EnvironmentPicker } from '../components/EnvironmentPicker';
+import { DockhandClient, extractUpdateIds } from '../api/client';
+import { EnvironmentCard } from '../components/EnvironmentCard';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
-import type { TransKey } from '../i18n/translations';
-import type { Container, DockhandEnvironment } from '../types';
+import type { DockhandEnvironment, EnvironmentOverview } from '../types';
 import { colors, radius } from '../theme';
 
-type Filter = 'all' | 'running' | 'stopped' | 'updates';
-
-const FILTERS: { key: Filter; labelKey: TransKey }[] = [
-  { key: 'all', labelKey: 'filter_all' },
-  { key: 'running', labelKey: 'filter_running' },
-  { key: 'stopped', labelKey: 'filter_stopped' },
-  { key: 'updates', labelKey: 'filter_updates' },
-];
-
-export default function ContainersScreen() {
-  const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments, environmentsLoading } = useSettings();
+export default function EnvironmentsDashboardScreen() {
+  const {
+    settings,
+    status,
+    environments,
+    selectEnvironment,
+    t,
+    refreshEnvironments,
+    environmentsLoading,
+  } = useSettings();
   const router = useRouter();
-  const [containers, setContainers] = useState<Container[]>([]);
-  const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [checkingUpdates, setCheckingUpdates] = useState(false);
-  const [updatingAll, setUpdatingAll] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const load = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
-      if (!client) return;
-      if (mode === 'refresh') setRefreshing(true);
-      if (mode === 'initial') setLoading(true);
+  const [overviews, setOverviews] = useState<Record<string, EnvironmentOverview>>({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+
+  /**
+   * Henter status (containere + oppdateringer) for et spesifikt miljø.
+   */
+  const fetchEnvOverview = useCallback(
+    async (env: DockhandEnvironment, currentSettings: typeof settings): Promise<EnvironmentOverview> => {
+      if (!currentSettings) {
+        return {
+          environment: env,
+          totalContainers: 0,
+          runningContainers: 0,
+          stoppedContainers: 0,
+          updatesAvailable: 0,
+          loading: false,
+          error: 'Not connected',
+        };
+      }
+
       try {
+        const client = new DockhandClient({
+          baseUrl: currentSettings.baseUrl,
+          token: currentSettings.token,
+          envId: env.id,
+          timeoutMs: 12000,
+        });
+
         const [list, pending] = await Promise.all([
           client.getContainers(),
           client.getPendingUpdates().catch(() => []),
         ]);
+
         const pendingIds = extractUpdateIds(pending);
-        // Liste kan også bære flagg i seg selv
-        for (const c of list) if (c.updateAvailable) pendingIds.add(c.id);
-        setUpdateIds(pendingIds);
-        setContainers(list.map((c) => ({ ...c, updateAvailable: pendingIds.has(c.id) })));
-        setError(null);
-        setLastUpdated(new Date());
+        for (const c of list) {
+          if (c.updateAvailable) pendingIds.add(c.id);
+        }
+
+        const totalContainers = list.length;
+        const runningContainers = list.filter((c) => c.state === 'running').length;
+        const stoppedContainers = list.filter((c) => c.state !== 'running').length;
+        const updatesAvailable = list.filter((c) => pendingIds.has(c.id)).length;
+
+        return {
+          environment: env,
+          totalContainers,
+          runningContainers,
+          stoppedContainers,
+          updatesAvailable,
+          loading: false,
+          error: null,
+        };
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+        return {
+          environment: env,
+          totalContainers: 0,
+          runningContainers: 0,
+          stoppedContainers: 0,
+          updatesAvailable: 0,
+          loading: false,
+          error: e instanceof Error ? e.message : String(e),
+        };
       }
-    },
-    [client],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      void load('initial');
-      void refreshEnvironments();
-    }, [load, refreshEnvironments]),
-  );
-
-  // Auto-oppdatering av listen mens skjermen er åpen
-  useEffect(() => {
-    const t = setInterval(() => {
-      if (!busyId && !checkingUpdates && !updatingAll) void load('refresh');
-    }, 15000);
-    return () => clearInterval(t);
-  }, [load, busyId, checkingUpdates, updatingAll]);
-
-  useEffect(
-    () => () => {
-      if (pollRef.current) clearInterval(pollRef.current);
     },
     [],
   );
 
-  async function runAction(id: string, action: () => Promise<void>) {
-    setBusyId(id);
-    try {
-      await action();
-      // Gi serveren et øyeblikk før vi leser tilstanden igjen
-      setTimeout(() => void load('refresh'), 1200);
-    } catch (e) {
-      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
-      setBusyId(null);
-    }
-  }
+  /**
+   * Laster overviews for alle kjente miljøer.
+   */
+  const loadAll = useCallback(
+    async (showRefreshIndicator = false) => {
+      if (!settings || environments.length === 0) return;
+      if (showRefreshIndicator) setRefreshing(true);
 
-  async function updateContainers(ids: string[]) {
-    if (!client || ids.length === 0) return;
-    setBusyId(ids.length === 1 ? ids[0] : 'bulk');
-    if (ids.length > 1) setUpdatingAll(true);
-    try {
-      await client.updateContainers(ids);
-      Alert.alert(
-        t('updateStartedTitle'),
-        ids.length === 1
-          ? t('updateStarted_one')
-          : t('updateStarted_other', { n: ids.length }),
-      );
-      // Følg med på status mens oppdateringen kjører
-      let ticks = 0;
-      pollRef.current = setInterval(() => {
-        void load('refresh');
-        if (++ticks >= 12) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          pollRef.current = null;
-          setBusyId(null);
-          setUpdatingAll(false);
+      // Marker alle som loading dersom vi ikke har data ennå
+      setOverviews((prev) => {
+        const next = { ...prev };
+        for (const env of environments) {
+          if (!next[env.id]) {
+            next[env.id] = {
+              environment: env,
+              totalContainers: 0,
+              runningContainers: 0,
+              stoppedContainers: 0,
+              updatesAvailable: 0,
+              loading: true,
+              error: null,
+            };
+          }
         }
-      }, 5000);
-    } catch (e) {
-      Alert.alert(t('updateFailed'), e instanceof Error ? e.message : String(e));
-      setBusyId(null);
-      setUpdatingAll(false);
-    }
-  }
+        return next;
+      });
 
-  async function checkForUpdates() {
-    if (!client) return;
-    setCheckingUpdates(true);
-    try {
-      await client.triggerUpdateCheck();
-      // Sjekken kjører som jobb på serveren – poll til den er ferdig
-      let ticks = 0;
-      pollRef.current = setInterval(async () => {
-        try {
-          const pending = await client.getPendingUpdates();
-          const ids = extractUpdateIds(pending);
-          setUpdateIds(ids);
-          setContainers((prev) => prev.map((c) => ({ ...c, updateAvailable: ids.has(c.id) })));
-        } catch {
-          // ignorer mellompoll
+      try {
+        const results = await Promise.all(
+          environments.map((env) => fetchEnvOverview(env, settings)),
+        );
+
+        const newMap: Record<string, EnvironmentOverview> = {};
+        for (const res of results) {
+          newMap[res.environment.id] = res;
         }
-        if (++ticks >= 15) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          pollRef.current = null;
-          setCheckingUpdates(false);
-          void load('refresh');
-        }
-      }, 4000);
-    } catch (e) {
-      Alert.alert(t('checkFailed'), e instanceof Error ? e.message : String(e));
-      setCheckingUpdates(false);
+        setOverviews(newMap);
+        setGlobalError(null);
+      } catch (err) {
+        setGlobalError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    [environments, settings, fetchEnvOverview],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshEnvironments();
+      void loadAll();
+    }, [refreshEnvironments, loadAll]),
+  );
+
+  // Periodisk auto-refresh hvert 30. sekund
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void loadAll(false);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [loadAll]);
+
+  // Beregn totale summerte tall på tvers av alle miljøer
+  const totals = useMemo(() => {
+    let totalStopped = 0;
+    let totalRunning = 0;
+    let totalUpdates = 0;
+    let totalContainers = 0;
+
+    for (const ov of Object.values(overviews)) {
+      if (!ov.error) {
+        totalStopped += ov.stoppedContainers;
+        totalRunning += ov.runningContainers;
+        totalUpdates += ov.updatesAvailable;
+        totalContainers += ov.totalContainers;
+      }
     }
-  }
 
-  const filtered = useMemo(() => {
-    switch (filter) {
-      case 'running':
-        return containers.filter((c) => c.state === 'running');
-      case 'stopped':
-        return containers.filter((c) => c.state !== 'running');
-      case 'updates':
-        return containers.filter((c) => updateIds.has(c.id));
-      default:
-        return containers;
-    }
-  }, [containers, filter, updateIds]);
+    return { totalStopped, totalRunning, totalUpdates, totalContainers };
+  }, [overviews]);
 
-  const withUpdates = containers.filter((c) => updateIds.has(c.id));
-
-  function confirmUpdateAll() {
-    Alert.alert(
-      t('confirmUpdateAllTitle'),
-      withUpdates.length === 1
-        ? t('confirmUpdateAll_one')
-        : t('confirmUpdateAll_other', { n: withUpdates.length }),
-      [
-        { text: t('common_cancel'), style: 'cancel' },
-        {
-          text: t('updateAll'),
-          style: 'destructive',
-          onPress: () => void updateContainers(withUpdates.map((c) => c.id)),
-        },
-      ],
-    );
-  }
-
-  async function onSelectEnvironment(env: DockhandEnvironment) {
-    setPickerOpen(false);
+  const handleSelectEnv = async (env: DockhandEnvironment) => {
     await selectEnvironment(env);
-    setContainers([]);
-    setUpdateIds(new Set());
-    void load('initial');
-  }
+    router.push('/containers');
+  };
 
   if (status === 'disconnected') {
     return <Redirect href="/connect" />;
   }
 
-  if (loading && containers.length === 0) {
+  const items = environments.map((env) => {
     return (
-      <View style={[styles.flex, styles.center]}>
-        <Stack.Screen options={{ title: t('nav_containers') }} />
-        <Text style={styles.muted}>{t('list_loading')}</Text>
-      </View>
+      overviews[env.id] ?? {
+        environment: env,
+        totalContainers: 0,
+        runningContainers: 0,
+        stoppedContainers: 0,
+        updatesAvailable: 0,
+        loading: true,
+        error: null,
+      }
     );
-  }
-
-  const timeLocale = lang === 'nb' ? 'nb-NO' : 'en-GB';
+  });
 
   return (
     <View style={styles.flex}>
-      <Stack.Screen options={{ title: t('nav_containers') }} />
-      <View style={styles.topBar}>
-        <Pressable
-          style={styles.envButton}
-          onPress={() => {
-            void refreshEnvironments();
-            setPickerOpen(true);
-          }}
-          testID="env-switcher"
-        >
-          <View style={styles.topBarText}>
-            <Text style={styles.envName} numberOfLines={1}>
-              {settings?.envName ?? t('list_envFallback')} ⌄
-            </Text>
-            <Text style={styles.meta}>
-              {lastUpdated
-                ? t('list_updatedAt', {
-                    time: lastUpdated.toLocaleTimeString(timeLocale, {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    }),
-                  })
-                : ' '}
-            </Text>
-          </View>
-        </Pressable>
-        <View style={styles.topBarActions}>
-          <Button
-            label={t('list_settings')}
-            variant="ghost"
-            small
-            onPress={() => router.push('/settings')}
-          />
-          <Button
-            label={t('list_check')}
-            variant="secondary"
-            small
-            loading={checkingUpdates}
-            onPress={() => void checkForUpdates()}
-            testID="check-updates"
-          />
-        </View>
-      </View>
-
-      <EnvironmentPicker
-        visible={pickerOpen}
-        environments={environments}
-        currentEnvId={settings?.envId ?? null}
-        loading={environmentsLoading}
-        onSelect={(env) => void onSelectEnvironment(env)}
-        onClose={() => setPickerOpen(false)}
+      <Stack.Screen
+        options={{
+          title: t('overview_title'),
+          headerRight: () => (
+            <Button
+              label={t('nav_settings')}
+              variant="ghost"
+              small
+              onPress={() => router.push('/settings')}
+            />
+          ),
+        }}
       />
 
-      {withUpdates.length > 0 ? (
-        <View style={styles.updateBanner}>
-          <Text style={styles.updateBannerText}>
-            {withUpdates.length === 1
-              ? t('banner_one')
-              : t('banner_other', { n: withUpdates.length })}
+      {/* Global Metrics Bar */}
+      <View style={styles.metricsContainer}>
+        <View style={styles.metricCard}>
+          <Text style={[styles.metricNumber, { color: colors.green }]}>
+            {totals.totalRunning}
           </Text>
-          <Button
-            label={t('updateAll')}
-            small
-            loading={updatingAll}
-            onPress={confirmUpdateAll}
-            testID="update-all"
-          />
+          <Text style={styles.metricLabel}>{t('overview_runningTotal')}</Text>
         </View>
-      ) : null}
 
-      <View style={styles.filters}>
-        {FILTERS.map((f) => (
-          <Button
-            key={f.key}
-            label={t(f.labelKey)}
-            variant={filter === f.key ? 'primary' : 'secondary'}
-            small
-            onPress={() => setFilter(f.key)}
-          />
-        ))}
+        <View
+          style={[
+            styles.metricCard,
+            totals.totalStopped > 0 && styles.metricCardAlertStopped,
+          ]}
+        >
+          <Text
+            style={[
+              styles.metricNumber,
+              { color: totals.totalStopped > 0 ? colors.red : colors.textDim },
+            ]}
+          >
+            {totals.totalStopped}
+          </Text>
+          <Text style={styles.metricLabel}>{t('overview_stoppedTotal')}</Text>
+        </View>
+
+        <View
+          style={[
+            styles.metricCard,
+            totals.totalUpdates > 0 && styles.metricCardAlertUpdates,
+          ]}
+        >
+          <Text
+            style={[
+              styles.metricNumber,
+              { color: totals.totalUpdates > 0 ? colors.amber : colors.textDim },
+            ]}
+          >
+            {totals.totalUpdates}
+          </Text>
+          <Text style={styles.metricLabel}>{t('overview_updatesTotal')}</Text>
+        </View>
       </View>
 
-      {error ? <ErrorBanner message={error} onRetry={() => void load('refresh')} /> : null}
+      {/* Header text */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{t('nav_environments')}</Text>
+        <Text style={styles.sectionSubtitle}>
+          {environments.length === 1
+            ? t('overview_envCount_one')
+            : t('overview_envCount_other', { n: environments.length })}
+        </Text>
+      </View>
+
+      {globalError ? (
+        <ErrorBanner message={globalError} onRetry={() => void loadAll(true)} />
+      ) : null}
 
       <FlatList
-        data={filtered}
-        keyExtractor={(c) => c.id}
+        data={items}
+        keyExtractor={(item) => item.environment.id}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => void load('refresh')}
+            refreshing={refreshing || environmentsLoading}
+            onRefresh={() => {
+              void refreshEnvironments();
+              void loadAll(true);
+            }}
             tintColor={colors.accent}
           />
         }
         ListEmptyComponent={
           <EmptyState
-            title={filter === 'updates' ? t('empty_updates') : t('empty_containers')}
-            hint={
-              filter === 'updates' ? t('empty_updatesHint') : t('empty_containersHint')
-            }
+            title={t('env_empty')}
+            hint={t('empty_containersHint')}
           />
         }
         renderItem={({ item }) => (
-          <ContainerCard
-            container={item}
-            busy={busyId === item.id}
-            onPress={() => router.push(`/container/${item.id}`)}
-            onStart={() => void runAction(item.id, () => client!.startContainer(item.id))}
-            onStop={() => {
-              Alert.alert(t('confirmStopTitle', { name: item.name }), t('confirmStopMessage'), [
-                { text: t('common_cancel'), style: 'cancel' },
-                {
-                  text: t('common_stop'),
-                  style: 'destructive',
-                  onPress: () => void runAction(item.id, () => client!.stopContainer(item.id)),
-                },
-              ]);
-            }}
-            onRestart={() => void runAction(item.id, () => client!.restartContainer(item.id))}
-            onUpdate={() => void updateContainers([item.id])}
+          <EnvironmentCard
+            overview={item}
+            isActive={settings?.envId === item.environment.id}
+            onPress={() => void handleSelectEnv(item.environment)}
           />
         )}
       />
@@ -350,40 +306,60 @@ export default function ContainersScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  muted: { color: colors.textDim },
-  topBar: {
+  metricsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 16,
     paddingBottom: 8,
-    gap: 8,
   },
-  topBarText: { flex: 1 },
-  envButton: { flex: 1 },
-  envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
-  meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
-  topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  updateBanner: {
-    marginHorizontal: 16,
-    marginTop: 4,
-    padding: 12,
-    borderRadius: radius.md,
+  metricCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderWidth: 1,
-    borderColor: colors.amber,
-    backgroundColor: 'rgba(210,153,34,0.12)',
-    flexDirection: 'row',
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
   },
-  updateBannerText: { color: colors.text, flex: 1, fontSize: 13, fontWeight: '600' },
-  filters: {
+  metricCardAlertStopped: {
+    borderColor: 'rgba(248,81,73,0.35)',
+    backgroundColor: 'rgba(248,81,73,0.06)',
+  },
+  metricCardAlertUpdates: {
+    borderColor: 'rgba(210,153,34,0.35)',
+    backgroundColor: 'rgba(210,153,34,0.06)',
+  },
+  metricNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: colors.textDim,
+    fontWeight: '600',
+  },
+  sectionHeader: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  list: { paddingHorizontal: 16, paddingBottom: 32 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: colors.textDim,
+  },
+  list: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
 });

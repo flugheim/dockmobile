@@ -18,7 +18,8 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'Containere' }} />
+          <Stack.Screen name="index" options={{ title: 'Miljøer' }} />
+          <Stack.Screen name="containers" options={{ title: 'Containere' }} />
           <Stack.Screen name="connect" options={{ headerShown: false }} />
           <Stack.Screen name="container/[id]" options={{ title: 'Container' }} />
           <Stack.Screen name="logs/[id]" options={{ title: 'Logger' }} />

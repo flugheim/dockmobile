@@ -10,6 +10,16 @@ export interface DockhandEnvironment {
   name: string;
 }
 
+export interface EnvironmentOverview {
+  environment: DockhandEnvironment;
+  totalContainers: number;
+  runningContainers: number;
+  stoppedContainers: number;
+  updatesAvailable: number;
+  loading: boolean;
+  error?: string | null;
+}
+
 /** En container slik appen ser den – alltid normalisert. */
 export interface Container {
   id: string;

@@ -38,6 +38,11 @@ yarn-error.*
 
 # generated native folders
 /ios
+
+# Builds
+build-output/
+*.apk
+dist-test/
 # MERK: /android genereres med `npx expo prebuild` og sjekkes bevisst inn
 # (F-Droid bygger APK-en selv fra kilde med Gradle og trenger mappen i repoet).
 

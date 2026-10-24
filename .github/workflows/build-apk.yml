@@ -115,11 +115,42 @@ jobs:
             printf "Release %s of DockMobile.\\n" "${{ github.ref_name }}" > /tmp/release-notes.md
           fi
 
+      - name: Build Android Release AAB
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          if [ -f app/release.keystore ]; then
+            export KEYSTORE_FILE="$(pwd)/app/release.keystore"
+            export KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
+            export KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
+          fi
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Find and rename AAB
+        id: find_aab
+        run: |
+          AAB_PATH=$(find android/app/build/outputs/bundle/release -name "*.aab" | head -n 1)
+          if [ -z "$AAB_PATH" ]; then
+            echo "Error: No AAB found!"
+            exit 1
+          fi
+          echo "Found AAB at: $AAB_PATH"
+          cp "$AAB_PATH" dockmobile.aab
+
+      - name: Upload AAB as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dockmobile-aab
+          path: dockmobile.aab
+          retention-days: 14
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dockmobile.apk
+          files: |
+            dockmobile.apk
+            dockmobile.aab
           body_path: /tmp/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,1 @@
+Containerdetaljer viser nå porter, monteringer, nettverk, helse, omstarter og ressursbegrensninger.

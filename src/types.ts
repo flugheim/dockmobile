@@ -52,6 +52,38 @@ export interface ComposeStack {
   containers: StackContainer[];
 }
 
+export interface ContainerInspect {
+  Id?: string;
+  Name?: string;
+  Image?: string;
+  Created?: string;
+  State?: {
+    Status?: string;
+    Running?: boolean;
+    StartedAt?: string;
+    FinishedAt?: string;
+    ExitCode?: number;
+    Health?: { Status?: string };
+  };
+  RestartCount?: number;
+  Config?: {
+    Image?: string;
+    Env?: string[];
+    Labels?: Record<string, string>;
+  };
+  HostConfig?: {
+    RestartPolicy?: { Name?: string; MaximumRetryCount?: number };
+    Memory?: number;
+    NanoCpus?: number;
+  };
+  NetworkSettings?: {
+    Ports?: Record<string, { HostIp?: string; HostPort?: string }[] | null>;
+    Networks?: Record<string, { IPAddress?: string }>;
+  };
+  Mounts?: { Type?: string; Source?: string; Destination?: string; Mode?: string; RW?: boolean }[];
+  divergence?: { env?: string[]; labels?: string[] };
+}
+
 export interface LogLine {
   id: string;
   text: string;

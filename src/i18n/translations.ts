@@ -116,6 +116,23 @@ const en = {
   detail_status: 'Status',
   detail_viewLogs: 'View logs',
 
+  // Container-inspect
+  detail_started: 'Started',
+  detail_finished: 'Finished',
+  detail_exitCode: 'Exit code',
+  detail_restarts: 'Restarts',
+  detail_restartPolicy: 'Restart policy',
+  detail_memory: 'Memory limit',
+  detail_cpu: 'CPU limit',
+  detail_ports: 'Ports',
+  detail_noPorts: 'No published ports',
+  detail_mounts: 'Mounts',
+  detail_noMounts: 'No mounts',
+  detail_networks: 'Networks',
+  detail_noNetworks: 'No networks',
+  detail_health: 'Health',
+  detail_created: 'Created',
+
   // Stacks
   stack_loading: 'Loading stacks …',
   stack_empty: 'No stacks',
@@ -271,6 +288,23 @@ const nb: Record<TransKey, string> = {
   detail_id: 'ID',
   detail_status: 'Status',
   detail_viewLogs: 'Se logger',
+
+  // Container-inspect
+  detail_started: 'Startet',
+  detail_finished: 'Avsluttet',
+  detail_exitCode: 'Exit-kode',
+  detail_restarts: 'Omstarter',
+  detail_restartPolicy: 'Omstartpolicy',
+  detail_memory: 'Minnebegrensning',
+  detail_cpu: 'CPU-begrensning',
+  detail_ports: 'Porter',
+  detail_noPorts: 'Ingen publiserte porter',
+  detail_mounts: 'Monteringer',
+  detail_noMounts: 'Ingen monteringer',
+  detail_networks: 'Nettverk',
+  detail_noNetworks: 'Ingen nettverk',
+  detail_health: 'Helse',
+  detail_created: 'Opprettet',
 
   // Stacks
   stack_loading: 'Laster stacker …',

@@ -8,7 +8,7 @@
  * normaliseres (se normalize* under).
  */
 
-import type { Container, ComposeStack, DockhandEnvironment, LogLine, StackContainer } from '../types';
+import type { Container, ComposeStack, ContainerInspect, DockhandEnvironment, LogLine, StackContainer } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -224,6 +224,17 @@ export class DockhandClient {
       body: JSON.stringify({ containerIds: ids }),
       timeoutMs: 600000, // pull kan ta lang tid
     });
+  }
+
+  /** Full inspect-data for en container. */
+  async getContainerInspect(id: string): Promise<ContainerInspect> {
+    try {
+      const data = await this.request<unknown>(`/api/containers/${encodeURIComponent(id)}/inspect`);
+      return (data && typeof data === 'object' ? (data as ContainerInspect) : {}) as ContainerInspect;
+    } catch (e) {
+      if (e instanceof ApiError && (e.status === 403 || e.status === 404)) return {};
+      throw e;
+    }
   }
 
   /** Logger (siste N linjer). */

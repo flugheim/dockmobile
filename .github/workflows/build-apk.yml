@@ -105,10 +105,21 @@ jobs:
           path: dockmobile.apk
           retention-days: 14
 
+      - name: Prepare release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          NOTES_FILE="release-notes/${{ github.ref_name }}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            cp "$NOTES_FILE" /tmp/release-notes.md
+          else
+            printf "Release %s of DockMobile.\\n" "${{ github.ref_name }}" > /tmp/release-notes.md
+          fi
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: dockmobile.apk
+          body_path: /tmp/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,22 +1,22 @@
-# UTKAST til F-Droid-metadata – ikke ferdig verifisert
+# DRAFT F-Droid metadata - not yet verified
 #
-# Slik brukes den:
-# 1. Gjør GitHub-repoet offentlig (F-Droid bygger kun fra offentlig kilde).
-# 2. Sjekk syntaks og feltnavn mot den offisielle referansen:
+# Usage:
+# 1. Make the GitHub repository public (F-Droid builds only from public source).
+# 2. Check syntax and field names against the official reference:
 #    https://f-droid.org/docs/Build_Metadata_Reference/
-#    og inklusjonsprosessen:
+#    and the inclusion process:
 #    https://f-droid.org/docs/Inclusion_How-To/
-# 3. Send filen som merge request til
+# 3. Submit this file as a merge request to
 #    https://gitlab.com/fdroid/fdroiddata
-#    som metadata/no.flugheim.dockmobile.yml
+#    as metadata/no.flugheim.dockmobile.yml
 #
-# Forutsetninger i repoet (allerede på plass):
-# - MIT-lisens (LICENSE) med opphavsperson
-# - android/ generert med `npx expo prebuild` og sjekket inn
-# - versionCode i app.json (android.versionCode), versjonsnavn = package.json
-# - Ingen proprietære avhengigheter, ingen Google-tjenester,
-#   ingen OTA-oppdateringer (expo-updates er ikke installert)
-# - fastlane/metadata/android/{en-US,nb-NO}/ med beskrivelser og changelog
+# Prerequisites in the repository (already in place):
+# - MIT license (LICENSE) with author
+# - android/ generated with `npx expo prebuild` and committed
+# - versionCode in app.json (android.versionCode), version name = package.json
+# - No proprietary dependencies, no Google services,
+#   no OTA updates (expo-updates is not installed)
+# - fastlane/metadata/android/{en-US,nb-NO}/ with descriptions and changelog
 
 Categories:
   - System

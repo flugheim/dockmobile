@@ -111,6 +111,8 @@ android {
                 keyAlias System.getenv('KEY_ALIAS') ?: 'dockmobile'
                 keyPassword System.getenv('KEYSTORE_PASSWORD')
                 storeType 'PKCS12'
+                v1SigningEnabled true
+                v2SigningEnabled true
             }
         }
     }

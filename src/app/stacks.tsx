@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -34,6 +35,7 @@ export default function StacksScreen() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [busyName, setBusyName] = useState<string | null>(null);
 
   const load = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
@@ -83,6 +85,39 @@ export default function StacksScreen() {
       else next.add(name);
       return next;
     });
+  }
+
+  async function runStackAction(name: string, action: () => Promise<void>) {
+    setBusyName(name);
+    try {
+      await action();
+      setTimeout(() => void load('refresh'), 1500);
+    } catch (e) {
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusyName(null);
+    }
+  }
+
+  function confirmDeploy(name: string) {
+    Alert.alert(t('stack_deployConfirmTitle'), t('stack_deployConfirmMessage'), [
+      { text: t('common_cancel'), style: 'cancel' },
+      {
+        text: t('stack_deploy'),
+        onPress: () => void runStackAction(name, () => client!.deployStack(name)),
+      },
+    ]);
+  }
+
+  function confirmRestart(name: string) {
+    Alert.alert(t('stack_restartConfirmTitle'), t('stack_restartConfirmMessage'), [
+      { text: t('common_cancel'), style: 'cancel' },
+      {
+        text: t('stack_restart'),
+        style: 'destructive',
+        onPress: () => void runStackAction(name, () => client!.restartStack(name)),
+      },
+    ]);
   }
 
   if (status === 'disconnected') {
@@ -184,7 +219,10 @@ export default function StacksScreen() {
           <StackCard
             stack={item}
             expanded={expanded.has(item.name)}
+            busy={busyName === item.name}
             onToggle={() => toggleExpanded(item.name)}
+            onDeploy={() => confirmDeploy(item.name)}
+            onRestart={() => confirmRestart(item.name)}
           />
         )}
       />

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ComposeStack } from '../types';
 
 import { useSettings } from '../state/SettingsContext';
+import { Button } from './ui';
 import { colors, radius, stackStatusColor, stackHealthColor, stateColor } from '../theme';
 import {
   containerStateLabel,
@@ -14,10 +15,13 @@ import {
 interface Props {
   stack: ComposeStack;
   expanded: boolean;
+  busy: boolean;
   onToggle: () => void;
+  onDeploy: () => void;
+  onRestart: () => void;
 }
 
-export function StackCard({ stack, expanded, onToggle }: Props) {
+export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart }: Props) {
   const { t, lang } = useSettings();
   const hasContainers = stack.containers.length > 0;
   const statusColor = stackStatusColor(stack.status);
@@ -61,6 +65,27 @@ export function StackCard({ stack, expanded, onToggle }: Props) {
         {stack.sourceType ? (
           <Text style={styles.sourceText}>{stackSourceLabel(stack.sourceType, lang)}</Text>
         ) : null}
+      </View>
+
+      <View style={styles.actions}>
+        <Button
+          label={t('stack_deploy')}
+          variant="secondary"
+          small
+          loading={busy}
+          disabled={busy}
+          onPress={onDeploy}
+          testID={`deploy-${stack.name}`}
+        />
+        <Button
+          label={t('stack_restart')}
+          variant="secondary"
+          small
+          loading={busy}
+          disabled={busy}
+          onPress={onRestart}
+          testID={`restart-${stack.name}`}
+        />
       </View>
 
       {expanded && hasContainers ? (
@@ -109,6 +134,7 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 11, fontWeight: '700' },
   chevron: { color: colors.textDim, fontSize: 16, marginLeft: 4 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
   metaText: { color: colors.textDim, fontSize: 12 },
   updateText: { color: colors.amber, fontSize: 12, fontWeight: '600' },
   healthText: { fontSize: 12, fontWeight: '600' },

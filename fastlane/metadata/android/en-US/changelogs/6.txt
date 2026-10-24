@@ -1,0 +1,1 @@
+Added deploy and restart actions for compose stacks.

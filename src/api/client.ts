@@ -151,6 +151,40 @@ export class DockhandClient {
     return normalizeStacks(data);
   }
 
+  /** Redeployer en stack (pull + recreate). */
+  async deployStack(name: string, opts?: { pull?: boolean; build?: boolean; forceRecreate?: boolean }): Promise<void> {
+    const res = await this.request<{ success?: boolean; error?: string }>(
+      `/api/stacks/${encodeURIComponent(name)}/deploy`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          pull: opts?.pull ?? true,
+          build: opts?.build ?? false,
+          forceRecreate: opts?.forceRecreate ?? false,
+        }),
+        timeoutMs: 300000,
+      },
+    );
+    if (res && res.success === false) {
+      throw new ApiError(0, res.error || 'Deploy feilet.');
+    }
+  }
+
+  /** Omstarter en stack. */
+  async restartStack(name: string, mode: 'restart' | 'ordered' | 'recreate' = 'restart'): Promise<void> {
+    const res = await this.request<{ success?: boolean; error?: string }>(
+      `/api/stacks/${encodeURIComponent(name)}/restart`,
+      {
+        method: 'POST',
+        query: { mode },
+        timeoutMs: 300000,
+      },
+    );
+    if (res && res.success === false) {
+      throw new ApiError(0, res.error || 'Omstart feilet.');
+    }
+  }
+
   /** Trigger en sjekk for tilgjengelige oppdateringer (kjører som jobb). */
   async triggerUpdateCheck(): Promise<void> {
     await this.request<unknown>('/api/containers/check-updates', {

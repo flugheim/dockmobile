@@ -1,0 +1,1 @@
+Lagt til deploy- og omstart-handlinger for compose-stacks.

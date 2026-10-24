@@ -135,6 +135,12 @@ const en = {
   stack_source_internal: 'Managed',
   stack_source_external: 'External',
   stack_source_git: 'Git',
+  stack_deploy: 'Deploy',
+  stack_restart: 'Restart',
+  stack_deployConfirmTitle: 'Deploy stack?',
+  stack_deployConfirmMessage: 'The stack will pull the latest images and be recreated.',
+  stack_restartConfirmTitle: 'Restart stack?',
+  stack_restartConfirmMessage: 'All containers in the stack will be restarted.',
 
   // Logger
   logs_pause: 'Pause',
@@ -285,6 +291,12 @@ const nb: Record<TransKey, string> = {
   stack_source_internal: 'Administrert',
   stack_source_external: 'Ekstern',
   stack_source_git: 'Git',
+  stack_deploy: 'Deploy',
+  stack_restart: 'Omstart',
+  stack_deployConfirmTitle: 'Deploye stack?',
+  stack_deployConfirmMessage: 'Stacken trekker nyeste images og gjenskapes.',
+  stack_restartConfirmTitle: 'Omstarte stack?',
+  stack_restartConfirmMessage: 'Alle containere i stacken omstartes.',
 
   logs_pause: 'Pause',
   logs_resume: 'Fortsett',

@@ -39,3 +39,32 @@ export function stateColor(state: string): string {
       return colors.textDim;
   }
 }
+
+/** Farge for stack-status. */
+export function stackStatusColor(status: string): string {
+  switch (status) {
+    case 'running':
+      return colors.green;
+    case 'partial':
+    case 'restarting':
+      return colors.amber;
+    case 'stopped':
+      return colors.textDim;
+    default:
+      return colors.textDim;
+  }
+}
+
+/** Farge for stack-helse. */
+export function stackHealthColor(health: string): string {
+  switch (health) {
+    case 'healthy':
+      return colors.green;
+    case 'unhealthy':
+      return colors.red;
+    case 'starting':
+      return colors.amber;
+    default:
+      return colors.textDim;
+  }
+}

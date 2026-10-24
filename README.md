@@ -16,6 +16,7 @@ fast and simple for daily use, with one focus: **keeping your containers updated
   - Dedicated environment cards displaying health status (online/offline), active environment badge, container counts, stopped count, and pending updates.
   - One-tap selection to switch active host and view its containers.
 - **Container list**: Live status (running / stopped / paused), image name, and status text.
+- **Compose stacks**: Browse compose stacks per environment, with container states and pending updates.
 - **Start / Stop / Restart**: Immediate container lifecycle controls with safety confirmation on stop.
 - **One-tap updates**: Tap "Update" on any container to pull the newest image and recreate it.
 - **"Update all"**: One-button bulk update for every container with a pending image update.
@@ -78,6 +79,7 @@ src/
     _layout.tsx           # Root navigation stack and theme provider
     index.tsx             # Environments Dashboard (home screen)
     containers.tsx        # Container list for selected environment
+    stacks.tsx            # Compose stacks for selected environment
     connect.tsx           # Server & token connection screen
     container/[id].tsx    # Container details and actions
     logs/[id].tsx         # Container log viewer
@@ -103,6 +105,7 @@ src/
 | Update containers | `POST /api/containers/batch-update?env=<id>` (`{containerIds: [...]}`) |
 | Start / stop / restart | `POST /api/containers/<id>/{start,stop,restart}` |
 | Logs | `GET /api/containers/<id>/logs?tail=400` |
+| Compose stacks | `GET /api/stacks?env=<id>` |
 
 All requests include `Authorization: Bearer dh_...`.
 

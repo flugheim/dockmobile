@@ -23,6 +23,7 @@ export default function RootLayout() {
           <Stack.Screen name="connect" options={{ headerShown: false }} />
           <Stack.Screen name="container/[id]" options={{ title: 'Container' }} />
           <Stack.Screen name="logs/[id]" options={{ title: 'Logger' }} />
+          <Stack.Screen name="stacks" options={{ title: 'Stacks' }} />
           <Stack.Screen name="settings" options={{ title: 'Innstillinger' }} />
         </Stack>
       </SettingsProvider>

@@ -1,0 +1,1 @@
+Fixed pending-update detection so only real image updates are offered; fixed cards stuck in busy state; release builds are now signed with a dedicated release key; longer timeout for update checks; added compose stacks view; dashboard loads all environments on open.

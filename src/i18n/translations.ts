@@ -31,6 +31,7 @@ const en = {
   nav_container: 'Container',
   nav_logs: 'Logs',
   nav_settings: 'Settings',
+  nav_stacks: 'Stacks',
 
   // Dashboard / Miljøoversikt
   overview_title: 'Dashboard',
@@ -51,6 +52,7 @@ const en = {
   overview_allHealthy: 'All running normally',
   overview_errorFetching: 'Failed to fetch status',
   overview_tapToOpen: 'Tap to view containers',
+  overview_active: 'Active',
 
   // Containerliste
   list_loading: 'Loading containers …',
@@ -114,6 +116,26 @@ const en = {
   detail_status: 'Status',
   detail_viewLogs: 'View logs',
 
+  // Stacks
+  stack_loading: 'Loading stacks …',
+  stack_empty: 'No stacks',
+  stack_emptyHint: 'No compose stacks were found in this environment.',
+  stack_noContainers: 'No containers',
+  stack_containers: '{running} of {total} running',
+  stack_updates_one: '1 update',
+  stack_updates_other: '{n} updates',
+  stack_status_running: 'Running',
+  stack_status_partial: 'Partial',
+  stack_status_restarting: 'Restarting',
+  stack_status_stopped: 'Stopped',
+  stack_status_created: 'Not deployed',
+  stack_health_healthy: 'Healthy',
+  stack_health_unhealthy: 'Unhealthy',
+  stack_health_starting: 'Starting',
+  stack_source_internal: 'Managed',
+  stack_source_external: 'External',
+  stack_source_git: 'Git',
+
   // Logger
   logs_pause: 'Pause',
   logs_resume: 'Resume',
@@ -167,6 +189,7 @@ const nb: Record<TransKey, string> = {
   nav_container: 'Container',
   nav_logs: 'Logger',
   nav_settings: 'Innstillinger',
+  nav_stacks: 'Stacker',
 
   overview_title: 'Oversikt',
   overview_loading: 'Laster miljøer …',
@@ -186,6 +209,7 @@ const nb: Record<TransKey, string> = {
   overview_allHealthy: 'Alt kjører normalt',
   overview_errorFetching: 'Kunne ikke hente status',
   overview_tapToOpen: 'Trykk for å se containere',
+  overview_active: 'Aktiv',
 
   list_loading: 'Laster containere …',
   list_envFallback: 'Miljø',
@@ -241,6 +265,26 @@ const nb: Record<TransKey, string> = {
   detail_id: 'ID',
   detail_status: 'Status',
   detail_viewLogs: 'Se logger',
+
+  // Stacks
+  stack_loading: 'Laster stacker …',
+  stack_empty: 'Ingen stacker',
+  stack_emptyHint: 'Fant ingen compose-stacker i dette miljøet.',
+  stack_noContainers: 'Ingen containere',
+  stack_containers: '{running} av {total} kjører',
+  stack_updates_one: '1 oppdatering',
+  stack_updates_other: '{n} oppdateringer',
+  stack_status_running: 'Kjører',
+  stack_status_partial: 'Delvis',
+  stack_status_restarting: 'Starter på nytt',
+  stack_status_stopped: 'Stoppet',
+  stack_status_created: 'Ikke deployet',
+  stack_health_healthy: 'Frisk',
+  stack_health_unhealthy: 'Ustabil',
+  stack_health_starting: 'Starter',
+  stack_source_internal: 'Administrert',
+  stack_source_external: 'Ekstern',
+  stack_source_git: 'Git',
 
   logs_pause: 'Pause',
   logs_resume: 'Fortsett',
@@ -312,4 +356,43 @@ const STATE_KEYS: Record<string, TransKey> = {
 export function containerStateLabel(state: string, lang: AppLang): string {
   const key = STATE_KEYS[state.toLowerCase()];
   return key ? translate(lang, key) : state;
+}
+
+const STACK_STATUS_KEYS: Record<string, TransKey> = {
+  running: 'stack_status_running',
+  partial: 'stack_status_partial',
+  restarting: 'stack_status_restarting',
+  stopped: 'stack_status_stopped',
+  created: 'stack_status_created',
+};
+
+const STACK_HEALTH_KEYS: Record<string, TransKey> = {
+  healthy: 'stack_health_healthy',
+  unhealthy: 'stack_health_unhealthy',
+  starting: 'stack_health_starting',
+};
+
+const STACK_SOURCE_KEYS: Record<string, TransKey> = {
+  internal: 'stack_source_internal',
+  external: 'stack_source_external',
+  git: 'stack_source_git',
+};
+
+/** Tekst for stack-status, med rå status som fallback. */
+export function stackStatusLabel(status: string, lang: AppLang): string {
+  const key = STACK_STATUS_KEYS[status.toLowerCase()];
+  return key ? translate(lang, key) : status;
+}
+
+/** Tekst for stack-helse, med rå verdi som fallback. */
+export function stackHealthLabel(health: string, lang: AppLang): string {
+  const key = STACK_HEALTH_KEYS[health.toLowerCase()];
+  return key ? translate(lang, key) : health;
+}
+
+/** Tekst for stack-kilde, med rå verdi som fallback. */
+export function stackSourceLabel(sourceType: string | null, lang: AppLang): string {
+  if (!sourceType) return '';
+  const key = STACK_SOURCE_KEYS[sourceType.toLowerCase()];
+  return key ? translate(lang, key) : sourceType;
 }

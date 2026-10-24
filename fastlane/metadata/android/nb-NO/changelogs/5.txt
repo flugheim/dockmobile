@@ -1,0 +1,1 @@
+Rettet oppdateringsdeteksjon slik at bare reelle image-oppdateringer tilbys; fikset kort som hang i opptatt-tilstand; release-bygg signeres nå med egen release-nøkkel; lengre tidsavbrudd for oppdateringssjekk; lagt til visning av compose-stacks; dashboard laster alle miljøer ved åpning.

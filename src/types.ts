@@ -32,6 +32,26 @@ export interface Container {
   updateAvailable: boolean;
 }
 
+export interface StackContainer {
+  id: string;
+  name: string;
+  service: string;
+  state: string;
+  image: string;
+  updateAvailable: boolean;
+}
+
+export interface ComposeStack {
+  name: string;
+  status: string;
+  health: string;
+  sourceType: string | null;
+  containerCount: number;
+  runningCount: number;
+  updateCount: number;
+  containers: StackContainer[];
+}
+
 export interface LogLine {
   id: string;
   text: string;

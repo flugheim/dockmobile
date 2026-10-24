@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, ErrorBanner } from '../../components/ui';
 import { useSettings } from '../../state/SettingsContext';
-import { extractUpdateIds } from '../../api/client';
+
 import type { Container } from '../../types';
 import { colors, radius, stateColor } from '../../theme';
 import { containerStateLabel } from '../../i18n/translations';
@@ -29,8 +29,8 @@ export default function ContainerDetailScreen() {
         setError(t('detail_notFound'));
         return;
       }
-      const updateIds = extractUpdateIds(pending);
-      setContainer({ ...found, updateAvailable: found.updateAvailable || updateIds.has(found.id) });
+      const pendingIds = new Set(pending.map((c) => c.id));
+      setContainer({ ...found, updateAvailable: found.updateAvailable || pendingIds.has(found.id) });
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

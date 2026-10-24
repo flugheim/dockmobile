@@ -8,7 +8,7 @@
  * normaliseres (se normalize* under).
  */
 
-import type { Container, DockhandEnvironment, LogLine } from '../types';
+import type { Container, ComposeStack, DockhandEnvironment, LogLine, StackContainer } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -136,19 +136,26 @@ export class DockhandClient {
   async getPendingUpdates(): Promise<Container[]> {
     try {
       const data = await this.request<unknown>('/api/containers/pending-updates');
-      return normalizeContainers(data);
-    } catch {
+      return normalizePendingUpdates(data);
+    } catch (e) {
       // Eldre versjoner kan mangle pending-updates – fall tilbake til check-updates
+      if (e instanceof ApiError && e.status !== 0 && e.status !== 404 && e.status !== 405) throw e;
       const data = await this.request<unknown>('/api/containers/check-updates');
-      return normalizeContainers(data);
+      return normalizePendingUpdates(data);
     }
+  }
+
+  /** Compose-stacks for gjeldende miljø. */
+  async getStacks(): Promise<ComposeStack[]> {
+    const data = await this.request<unknown>('/api/stacks');
+    return normalizeStacks(data);
   }
 
   /** Trigger en sjekk for tilgjengelige oppdateringer (kjører som jobb). */
   async triggerUpdateCheck(): Promise<void> {
     await this.request<unknown>('/api/containers/check-updates', {
       method: 'POST',
-      timeoutMs: 30000,
+      timeoutMs: 300000,
     });
   }
 
@@ -240,6 +247,116 @@ export function normalizeContainers(data: unknown): Container[] {
     .filter((c): c is Container => c !== null);
 }
 
+const PENDING_UPDATE_LIST_KEYS = ['pendingUpdates', 'updates', 'pending', 'containers', 'items', 'data'];
+
+/**
+ * Normaliserer svaret fra pending-updates/check-updates, men tar bare med
+ * containere som faktisk har en reell image-oppdatering (hasImageUpdate).
+ * Eldre servere som ikke sender hasImageUpdate beholder alle radene (bakoverkompatibelt).
+ */
+export function normalizePendingUpdates(data: unknown): Container[] {
+  const rows = toArray<any>(data, PENDING_UPDATE_LIST_KEYS);
+  const hasExplicit = rows.some(
+    (r) => r && typeof r === 'object' && typeof (r as Record<string, unknown>).hasImageUpdate === 'boolean',
+  );
+  const filtered = hasExplicit
+    ? rows.filter((r) => !r || typeof r !== 'object' || (r as Record<string, unknown>).hasImageUpdate !== false)
+    : rows;
+  return normalizeContainers(filtered);
+}
+
+const STACK_LIST_KEYS = ['stacks', 'data', 'items', 'results'];
+
+export function normalizeStacks(data: unknown): ComposeStack[] {
+  return toArray<any>(data, STACK_LIST_KEYS)
+    .map(normalizeStack)
+    .filter((s): s is ComposeStack => s !== null);
+}
+
+function normalizeStack(raw: unknown): ComposeStack | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+
+  const name = firstString(o, 'name', 'Name', 'stackName', 'project');
+  if (!name) return null;
+
+  const rawDetails = Array.isArray(o['containerDetails'])
+    ? o['containerDetails']
+    : Array.isArray(o['containers']) && (o['containers'] as unknown[]).some((x) => x && typeof x === 'object')
+      ? o['containers']
+      : [];
+  const containers = (rawDetails as unknown[])
+    .map(normalizeStackContainer)
+    .filter((c): c is StackContainer => c !== null);
+
+  const num = (v: unknown): number | null =>
+    typeof v === 'number' && Number.isFinite(v) ? v : null;
+
+  const containerCount =
+    num(o['containerCount']) ??
+    (Array.isArray(o['containers']) ? o['containers'].length : null) ??
+    containers.length;
+
+  const runningCount =
+    num(o['runningCount']) ??
+    containers.filter((c) => c.state === 'running').length;
+
+  const updateCount =
+    num(o['updateCount']) ??
+    (o['updatesAvailable'] === true ? Math.max(1, containers.filter((c) => c.updateAvailable).length) : 0) ??
+    containers.filter((c) => c.updateAvailable).length;
+
+  const statusRaw = firstString(o, 'status', 'Status') || '';
+  const healthRaw = firstString(o, 'health', 'Health') || '';
+  const status = statusRaw
+    ? statusRaw.toLowerCase()
+    : containerCount <= 0
+      ? 'stopped'
+      : runningCount >= containerCount
+        ? 'running'
+        : runningCount > 0
+          ? 'partial'
+          : 'stopped';
+
+  const health = healthRaw ? healthRaw.toLowerCase() : 'none';
+  const sourceType = firstString(o, 'sourceType', 'SourceType') || null;
+
+  return {
+    name,
+    status,
+    health,
+    sourceType,
+    containerCount,
+    runningCount,
+    updateCount,
+    containers,
+  };
+}
+
+function normalizeStackContainer(raw: unknown): StackContainer | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+
+  const id = str(o['id'] ?? o['Id'] ?? o['ID'] ?? o['containerId']);
+  const name = firstString(o, 'name', 'Name') || (id || '');
+  if (!id && !name) return null;
+
+  const stateObj = o['State'] as Record<string, unknown> | undefined;
+  const state = str(o['state'] ?? stateObj?.['Status'] ?? 'unknown').toLowerCase();
+
+  return {
+    id: id || name,
+    name: name || id,
+    service: firstString(o, 'service', 'Service') || (name || id),
+    state,
+    image: firstString(o, 'image', 'Image') || 'ukjent image',
+    updateAvailable:
+      o['updateAvailable'] === true ||
+      o['hasUpdate'] === true ||
+      o['hasImageUpdate'] === true,
+  };
+}
+
 function str(v: unknown): string {
   return typeof v === 'string' ? v.trim() : v == null ? '' : String(v);
 }
@@ -263,6 +380,7 @@ function firstString(obj: Record<string, unknown>, ...keys: string[]): string {
 const UPDATE_FLAG_KEYS = [
   'updateAvailable',
   'hasUpdate',
+  'hasImageUpdate',
   'imageUpdate',
   'needsUpdate',
   'updatePending',
@@ -346,6 +464,7 @@ function normalizeContainer(raw: unknown): Container | null {
   const updateAvailable =
     o['updateAvailable'] === true ||
     o['hasUpdate'] === true ||
+    o['hasImageUpdate'] === true ||
     o['imageUpdate'] === true ||
     o['needsUpdate'] === true ||
     o['updatePending'] === true ||

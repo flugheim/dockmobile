@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
-import { DockhandClient, extractUpdateIds } from '../api/client';
+import { DockhandClient } from '../api/client';
 import { EnvironmentCard } from '../components/EnvironmentCard';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
@@ -59,7 +59,7 @@ export default function EnvironmentsDashboardScreen() {
           client.getPendingUpdates().catch(() => []),
         ]);
 
-        const pendingIds = extractUpdateIds(pending);
+        const pendingIds = new Set(pending.map((c) => c.id));
         for (const c of list) {
           if (c.updateAvailable) pendingIds.add(c.id);
         }
@@ -109,8 +109,8 @@ export default function EnvironmentsDashboardScreen() {
    * Laster overviews for alle kjente miljøer.
    */
   const loadAll = useCallback(
-    async (showRefreshIndicator = false) => {
-      const currentEnvs = environmentsRef.current;
+    async (showRefreshIndicator = false, envs?: DockhandEnvironment[]) => {
+      const currentEnvs = envs && envs.length > 0 ? envs : environmentsRef.current;
       const currentSettings = settingsRef.current;
       if (!currentSettings || currentEnvs.length === 0) return;
       if (inFlightRef.current) return;
@@ -141,19 +141,22 @@ export default function EnvironmentsDashboardScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void refreshEnvironments().then(() => {
-        void loadAll();
-      });
+      void (async () => {
+        const fresh = await refreshEnvironments();
+        await loadAll(false, fresh);
+      })();
     }, [refreshEnvironments, loadAll]),
   );
 
-  // Periodisk auto-refresh hvert 30. sekund
-  useEffect(() => {
-    const timer = setInterval(() => {
-      void loadAll(false);
-    }, 30000);
-    return () => clearInterval(timer);
-  }, [loadAll]);
+  // Periodisk auto-refresh hvert 30. sekund, kun mens skjermen er synlig
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setInterval(() => {
+        void loadAll(false);
+      }, 30000);
+      return () => clearInterval(timer);
+    }, [loadAll]),
+  );
 
   // Beregn totale summerte tall på tvers av alle miljøer
   const totals = useMemo(() => {
@@ -259,12 +262,23 @@ export default function EnvironmentsDashboardScreen() {
 
       {/* Header text */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('nav_environments')}</Text>
-        <Text style={styles.sectionSubtitle}>
-          {environments.length === 1
-            ? t('overview_envCount_one')
-            : t('overview_envCount_other', { n: environments.length })}
-        </Text>
+        <View style={styles.sectionHeaderText}>
+          <Text style={styles.sectionTitle}>{t('nav_environments')}</Text>
+          <Text style={styles.sectionSubtitle}>
+            {environments.length === 1
+              ? t('overview_envCount_one')
+              : t('overview_envCount_other', { n: environments.length })}
+          </Text>
+        </View>
+        {environments.length > 0 ? (
+          <Button
+            label={t('nav_stacks')}
+            variant="ghost"
+            small
+            onPress={() => router.push('/stacks')}
+            testID="open-stacks"
+          />
+        ) : null}
       </View>
 
       {globalError ? (
@@ -348,7 +362,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    gap: 8,
   },
+  sectionHeaderText: { flex: 1 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',

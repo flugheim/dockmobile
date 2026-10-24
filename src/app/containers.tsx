@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
-import { extractUpdateIds } from '../api/client';
+
 import { ContainerCard } from '../components/ContainerCard';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
@@ -41,7 +41,7 @@ export default function ContainersScreen() {
   const [updatingAll, setUpdatingAll] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const updatePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
@@ -53,7 +53,7 @@ export default function ContainersScreen() {
           client.getContainers(),
           client.getPendingUpdates().catch(() => []),
         ]);
-        const pendingIds = extractUpdateIds(pending);
+        const pendingIds = new Set(pending.map((c) => c.id));
         // Liste kan også bære flagg i seg selv
         for (const c of list) if (c.updateAvailable) pendingIds.add(c.id);
         setUpdateIds(pendingIds);
@@ -78,16 +78,18 @@ export default function ContainersScreen() {
   );
 
   // Auto-oppdatering av listen mens skjermen er åpen
-  useEffect(() => {
-    const t = setInterval(() => {
-      if (!busyId && !checkingUpdates && !updatingAll) void load('refresh');
-    }, 15000);
-    return () => clearInterval(t);
-  }, [load, busyId, checkingUpdates, updatingAll]);
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setInterval(() => {
+        if (!busyId && !checkingUpdates && !updatingAll) void load('refresh');
+      }, 15000);
+      return () => clearInterval(timer);
+    }, [load, busyId, checkingUpdates, updatingAll]),
+  );
 
   useEffect(
     () => () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      if (updatePollRef.current) clearInterval(updatePollRef.current);
     },
     [],
   );
@@ -100,6 +102,7 @@ export default function ContainersScreen() {
       setTimeout(() => void load('refresh'), 1200);
     } catch (e) {
       Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
       setBusyId(null);
     }
   }
@@ -117,12 +120,13 @@ export default function ContainersScreen() {
           : t('updateStarted_other', { n: ids.length }),
       );
       // Følg med på status mens oppdateringen kjører
+      if (updatePollRef.current) clearInterval(updatePollRef.current);
       let ticks = 0;
-      pollRef.current = setInterval(() => {
+      updatePollRef.current = setInterval(() => {
         void load('refresh');
         if (++ticks >= 12) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          pollRef.current = null;
+          if (updatePollRef.current) clearInterval(updatePollRef.current);
+          updatePollRef.current = null;
           setBusyId(null);
           setUpdatingAll(false);
         }
@@ -139,26 +143,14 @@ export default function ContainersScreen() {
     setCheckingUpdates(true);
     try {
       await client.triggerUpdateCheck();
-      // Sjekken kjører som jobb på serveren – poll til den er ferdig
-      let ticks = 0;
-      pollRef.current = setInterval(async () => {
-        try {
-          const pending = await client.getPendingUpdates();
-          const ids = extractUpdateIds(pending);
-          setUpdateIds(ids);
-          setContainers((prev) => prev.map((c) => ({ ...c, updateAvailable: ids.has(c.id) })));
-        } catch {
-          // ignorer mellompoll
-        }
-        if (++ticks >= 15) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          pollRef.current = null;
-          setCheckingUpdates(false);
-          void load('refresh');
-        }
-      }, 4000);
+      const pending = await client.getPendingUpdates();
+      const ids = new Set(pending.map((c) => c.id));
+      setUpdateIds(ids);
+      setContainers((prev) => prev.map((c) => ({ ...c, updateAvailable: ids.has(c.id) })));
+      void load('refresh');
     } catch (e) {
       Alert.alert(t('checkFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
       setCheckingUpdates(false);
     }
   }
@@ -197,10 +189,10 @@ export default function ContainersScreen() {
 
   async function onSelectEnvironment(env: DockhandEnvironment) {
     setPickerOpen(false);
-    await selectEnvironment(env);
     setContainers([]);
     setUpdateIds(new Set());
-    void load('initial');
+    setLoading(true);
+    await selectEnvironment(env);
   }
 
   if (status === 'disconnected') {
@@ -220,7 +212,19 @@ export default function ContainersScreen() {
 
   return (
     <View style={styles.flex}>
-      <Stack.Screen options={{ title: settings?.envName ?? t('nav_containers') }} />
+      <Stack.Screen
+        options={{
+          title: settings?.envName ?? t('nav_containers'),
+          headerRight: () => (
+            <Button
+              label={t('nav_settings')}
+              variant="ghost"
+              small
+              onPress={() => router.push('/settings')}
+            />
+          ),
+        }}
+      />
       <View style={styles.topBar}>
         <Pressable
           style={styles.envButton}
@@ -248,10 +252,11 @@ export default function ContainersScreen() {
         </Pressable>
         <View style={styles.topBarActions}>
           <Button
-            label={t('list_settings')}
+            label={t('nav_stacks')}
             variant="ghost"
             small
-            onPress={() => router.push('/settings')}
+            onPress={() => router.push('/stacks')}
+            testID="open-stacks"
           />
           <Button
             label={t('list_check')}

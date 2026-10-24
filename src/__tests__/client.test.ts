@@ -5,6 +5,8 @@
 import {
   normalizeContainers,
   normalizeLogs,
+  normalizePendingUpdates,
+  normalizeStacks,
   extractUpdateIds,
   stripAnsi,
   toArray,
@@ -47,6 +49,7 @@ check('docker-stil: state fra State.Status', c3[0].state === 'running');
 check('flagg updateAvailable', normalizeContainers([{ id: 'a', name: 'a', updateAvailable: true }])[0].updateAvailable);
 check('flagg hasUpdate', normalizeContainers([{ id: 'b', name: 'b', hasUpdate: true }])[0].updateAvailable);
 check('flagg newDigest', normalizeContainers([{ id: 'c', name: 'c', newDigest: 'sha256:aa' }])[0].updateAvailable);
+check('flagg hasImageUpdate', normalizeContainers([{ id: 'd', name: 'd', hasImageUpdate: true }])[0].updateAvailable);
 
 // 5. extractUpdateIds fra ulike former
 check('ids fra array', extractUpdateIds([{ containerId: 'a' }, { containerId: 'b' }]).size === 2);
@@ -65,5 +68,49 @@ check('toArray direkte array', toArray([1, 2]).length === 2);
 check('toArray nøstet nøkkel', toArray({ data: [1] }).length === 1);
 check('toArray tomt objekt', toArray({}).length === 0);
 
-console.log(failures === 0 ? '\nALLE TESTER BESTÅTT' : `\n${failures} FEIL`);
+// 8) normalizePendingUpdates: bare reelle image-oppdateringer
+const modernPending = {
+  pendingUpdates: [
+    { containerId: 'a', containerName: 'a', hasImageUpdate: true },
+    { containerId: 'b', containerName: 'b', hasImageUpdate: false, pinnedToDigest: true },
+    { containerId: 'c', containerName: 'c', hasImageUpdate: false, newerVersion: { tag: '2.0' } },
+    { containerId: 'd', containerName: 'd', hasImageUpdate: false, releaseAgeRemainingHours: 12 },
+  ],
+};
+const modernNorm = normalizePendingUpdates(modernPending);
+check('pending: kun reelle oppdateringer beholdes', modernNorm.length === 1 && modernNorm[0].id === 'a');
+const legacyPending = { pendingUpdates: [{ containerId: 'x' }, { containerId: 'y' }] };
+check('pending: eldre svar uten flagg tar alle', normalizePendingUpdates(legacyPending).length === 2);
+const pinnedOnly = { pendingUpdates: [{ containerId: 'p', hasImageUpdate: false, pinnedToDigest: true }] };
+check('pending: kun pinned gir ingen oppdatering', normalizePendingUpdates(pinnedOnly).length === 0);
+const wrappedPending = { data: [{ containerId: 'w', hasImageUpdate: true }] };
+check('pending: innpakket form', normalizePendingUpdates(wrappedPending).length === 1);
+
+// 9) normalizeStacks
+const stacks = normalizeStacks([
+  {
+    name: 'web',
+    status: 'running',
+    health: 'healthy',
+    containers: ['a', 'b'],
+    containerDetails: [
+      { id: 'a', name: 'web-1', service: 'web', state: 'running', image: 'nginx:latest', updateAvailable: true },
+      { id: 'b', name: 'web-2', service: 'db', state: 'exited', image: 'postgres:16' },
+    ],
+    updateCount: 1,
+  },
+  { name: 'db', status: 'stopped', containers: [], containerDetails: [] },
+]);
+check('stacks: to stacks', stacks.length === 2);
+check('stacks: teller containere', stacks.find((s) => s.name === 'web')!.containerCount === 2);
+check('stacks: kjørende', stacks.find((s) => s.name === 'web')!.runningCount === 1);
+check('stacks: oppdateringer', stacks.find((s) => s.name === 'web')!.updateCount === 1);
+check('stacks: helse', stacks.find((s) => s.name === 'web')!.health === 'healthy');
+check('stacks: containerdetaljer', stacks.find((s) => s.name === 'web')!.containers[0].service === 'web');
+const wrappedStacks = normalizeStacks({ stacks: [{ name: 's', containers: [], containerDetails: [] }] });
+check('stacks: innpakket form', wrappedStacks.length === 1);
+const emptyStacks = normalizeStacks([{ name: '', containers: [] }]);
+check('stacks: tomme navn filtreres', emptyStacks.length === 0);
+
+console.log(failures === 0 ? '\\nALLE TESTER BESTÅTT' : `\\n${failures} FEIL`);
 process.exit(failures === 0 ? 0 : 1);

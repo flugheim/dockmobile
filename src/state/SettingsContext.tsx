@@ -50,8 +50,8 @@ interface SettingsValue {
   error: string | null;
   /** True mens miljølisten hentes fra serveren. */
   environmentsLoading: boolean;
-  /** Hent miljølisten på nytt fra serveren. */
-  refreshEnvironments: () => Promise<void>;
+  /** Hent miljølisten på nytt fra serveren. Returnerer listen (tom ved feil). */
+  refreshEnvironments: () => Promise<DockhandEnvironment[]>;
   /** Brukerens språkvalg ('system' følger telefonen). */
   langChoice: LangChoice;
   /** Effektivt språk etter oppløsning mot telefonens språk. */
@@ -101,7 +101,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
    * appen ikke står igjen med et ugyldig valg.
    */
   const loadEnvironments = useCallback(
-    async (baseUrl: string, token: string, currentEnvId: string | null) => {
+    async (baseUrl: string, token: string, currentEnvId: string | null): Promise<DockhandEnvironment[]> => {
       setEnvironmentsLoading(true);
       try {
         const probe = new DockhandClient({ baseUrl, token, timeoutMs: 15000 });
@@ -124,8 +124,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             return next;
           });
         }
+        return envs;
       } catch {
         // Behold forrige liste ved nettfeil – bedre enn en tom liste.
+        return [];
       } finally {
         setEnvironmentsLoading(false);
       }
@@ -133,9 +135,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [persist],
   );
 
-  const refreshEnvironments = useCallback(async () => {
-    if (!settings) return;
-    await loadEnvironments(settings.baseUrl, settings.token, settings.envId);
+  const refreshEnvironments = useCallback(async (): Promise<DockhandEnvironment[]> => {
+    if (!settings) return [];
+    return loadEnvironments(settings.baseUrl, settings.token, settings.envId);
   }, [settings, loadEnvironments]);
 
   // Les lagrede innstillinger ved oppstart

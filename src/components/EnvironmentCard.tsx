@@ -41,7 +41,7 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
           </Text>
           {isActive ? (
             <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>Aktiv</Text>
+              <Text style={styles.activeBadgeText}>{t('overview_active')}</Text>
             </View>
           ) : null}
         </View>

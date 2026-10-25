@@ -89,6 +89,10 @@ const en = {
   common_cancel: 'Cancel',
   common_stop: 'Stop',
   common_retry: 'Try again',
+  common_ok: 'OK',
+  openAlert_title: 'Status on open',
+  openAlert_updates: '{n} containers have updates available',
+  openAlert_stopped: '{n} containers are stopped',
 
   // Containerkort
   card_updateAvailable: '⬆ Update available',
@@ -265,6 +269,10 @@ const nb: Record<TransKey, string> = {
   common_cancel: 'Avbryt',
   common_stop: 'Stopp',
   common_retry: 'Prøv igjen',
+  common_ok: 'OK',
+  openAlert_title: 'Status ved åpning',
+  openAlert_updates: '{n} containere har oppdatering tilgjengelig',
+  openAlert_stopped: '{n} containere er stoppet',
 
   card_updateAvailable: '⬆ Oppdatering tilgjengelig',
   card_update: 'Oppdater',

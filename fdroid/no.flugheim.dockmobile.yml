@@ -29,13 +29,24 @@ Builds:
     scandelete:
       - node_modules
     scanignore:
-      - node_modules/**/local-maven-repo/**/*
-      - node_modules/hermes-compiler/hermesc/**/*
-      - node_modules/fb-dotslash/bin/**/*
-      - node_modules/react-native/React/I18n/strings/**/*.bin
+      - node_modules/expo-asset/local-maven-repo
+      - node_modules/@expo/dom-webview/local-maven-repo
+      - node_modules/expo-file-system/local-maven-repo
+      - node_modules/expo-font/local-maven-repo
+      - node_modules/expo-keep-awake/local-maven-repo
+      - node_modules/expo-linking/local-maven-repo
+      - node_modules/expo-localization/local-maven-repo
+      - node_modules/expo-router/local-maven-repo
+      - node_modules/expo-secure-store/local-maven-repo
+      - node_modules/expo-status-bar/local-maven-repo
+      - node_modules/@expo/ui/local-maven-repo
+      - node_modules/hermes-compiler/hermesc
+      - node_modules/fb-dotslash/bin
+      - node_modules/react-native/React/I18n/strings
       - node_modules/expo-modules-core/android/ExpoModulesCorePlugin.gradle
       - node_modules/react-native-safe-area-context/android/build.gradle
       - node_modules/react-native-screens/android/build.gradle
+      - node_modules/@react-native/masked-view/masked-view/android/build.gradle
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

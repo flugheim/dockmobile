@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
-  AppState,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -98,21 +96,6 @@ export default function EnvironmentsDashboardScreen() {
   const inFlightRef = useRef(false);
   const environmentsRef = useRef(environments);
   const settingsRef = useRef(settings);
-  const openAlertShownRef = useRef(false);
-  const appStateRef = useRef(AppState.currentState);
-
-  // Nullstill varslet når appen kommer tilbake fra bakgrunnen, slik at
-  // det vises igjen neste gang appen åpnes.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (next) => {
-      if (appStateRef.current !== 'active' && next === 'active') {
-        openAlertShownRef.current = false;
-      }
-      appStateRef.current = next;
-    });
-    return () => sub.remove();
-  }, []);
-
   useEffect(() => {
     environmentsRef.current = environments;
   }, [environments]);
@@ -173,28 +156,6 @@ export default function EnvironmentsDashboardScreen() {
       return () => clearInterval(timer);
     }, [loadAll]),
   );
-
-  // Vis et varsel første gang appen åpnes og finner oppdateringer/stoppede containere
-  useEffect(() => {
-    if (openAlertShownRef.current) return;
-    const entries = Object.values(overviews);
-    if (entries.length === 0) return;
-
-    const totalUpdates = entries.reduce((s, o) => s + o.updatesAvailable, 0);
-    const totalStopped = entries.reduce((s, o) => s + o.stoppedContainers, 0);
-    if (totalUpdates === 0 && totalStopped === 0) {
-      openAlertShownRef.current = true;
-      return;
-    }
-
-    openAlertShownRef.current = true;
-    const parts: string[] = [];
-    if (totalUpdates > 0) parts.push(t('openAlert_updates', { n: totalUpdates }));
-    if (totalStopped > 0) parts.push(t('openAlert_stopped', { n: totalStopped }));
-    Alert.alert(t('openAlert_title'), parts.join('\\n'), [
-      { text: t('common_ok') },
-    ]);
-  }, [overviews, t]);
 
   // Beregn totale summerte tall på tvers av alle miljøer
   const totals = useMemo(() => {

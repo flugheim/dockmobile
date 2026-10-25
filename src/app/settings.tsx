@@ -1,9 +1,11 @@
 import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Constants from 'expo-constants';
 import { Button } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
 import type { LangChoice } from '../i18n/translations';
+import { CHANGELOG } from '../changelog';
 import { colors, radius } from '../theme';
 
 export default function SettingsScreen() {
@@ -107,6 +109,15 @@ export default function SettingsScreen() {
 
       <Text style={styles.groupTitle}>{t('settings_about')}</Text>
       <View style={styles.card}>
+        <Row label={t('settings_version')} value={Constants.expoConfig?.version ?? '1.5.2'} />
+        <Button
+          label={t('settings_changelog')}
+          variant="secondary"
+          onPress={() =>
+            Alert.alert(t('settings_changelogTitle'), CHANGELOG, [{ text: t('common_ok') }])
+          }
+          style={{ marginTop: 10 }}
+        />
         <Text style={styles.about}>{t('settings_about1')}</Text>
         <Text style={styles.about}>{t('settings_about2')}</Text>
       </View>

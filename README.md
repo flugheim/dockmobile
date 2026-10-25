@@ -25,6 +25,19 @@ fast and simple for daily use, with one focus: **keeping your containers updated
 - **Encrypted credentials**: API tokens are securely stored on your device (Android Keystore via `expo-secure-store`).
 - **Bilingual**: Seamless English and Norwegian (Bokmål) localization with automatic system language detection or manual override in settings.
 
+## Requirements
+
+### Runtime (app)
+- **Android 7.0+ (API 24)** or newer.
+- A running [Dockhand](https://dockhand.pro) server reachable from the phone (same LAN or VPN).
+- A Dockhand API token (`dh_...`).
+
+### Development / building
+- **Node.js 20+** (CI uses Node 20; `npm ci`).
+- **JDK 17** (Gradle toolchain; the project targets Java 17).
+- **Android SDK** with platform tools and build tools 31+ (`ANDROID_HOME` set).
+- **Expo SDK 57** (see `package.json`).
+
 ## Getting started
 
 ### 1. Create an API token in Dockhand
@@ -116,6 +129,15 @@ npx tsc --noEmit    # TypeScript typechecking
 npx expo lint       # ESLint verification
 npm test            # Client normalization and i18n tests
 ```
+
+## Development & AI assistance
+
+DockMobile is developed with substantial assistance from large language models (LLMs)
+for code generation, refactoring and debugging. All changes are reviewed, type-checked
+and tested by the maintainer before release. We believe in transparency: the full
+source code, commit history and build process are open for inspection, and the
+project is MIT-licensed. If you spot anything questionable or have concerns about
+any part of the code, please open an issue.
 
 ## Security
 

@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radius.sm,
   },
-  pressed: { opacity: 0.85 },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   disabled: { opacity: 0.45 },
   label: { fontSize: 15, fontWeight: '600' },
   labelSmall: { fontSize: 13, fontWeight: '600' },
@@ -94,7 +94,7 @@ const variants: Record<Variant, ViewStyle> = {
   primary: { backgroundColor: colors.accent },
   secondary: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
   danger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.red },
-  ghost: { backgroundColor: 'transparent' },
+  ghost: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
 };
 
 /** Enkel placeholder når det ikke er noe å vise. */

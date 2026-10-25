@@ -193,6 +193,9 @@ const en = {
   settings_connectedMany: 'Connected to {url} – {n} environments.',
   settings_switchEnv: 'Switch environment',
   settings_about: 'About the app',
+  settings_version: 'Version',
+  settings_changelog: 'Changelog',
+  settings_changelogTitle: 'Changelog',
   settings_about1:
     'DockMobile is an independent client for Dockhand. All communication goes directly from your phone to your own server – no data is sent to third parties.',
   settings_about2:
@@ -379,6 +382,9 @@ const nb: Record<TransKey, string> = {
   settings_connectedMany: 'Tilkoblet {url} – {n} miljøer.',
   settings_switchEnv: 'Bytt miljø',
   settings_about: 'Om appen',
+  settings_version: 'Versjon',
+  settings_changelog: 'Endringslogg',
+  settings_changelogTitle: 'Endringslogg',
   settings_about1:
     'DockMobile er en uavhengig klient for Dockhand. All kommunikasjon går direkte fra telefonen til din egen server – ingen data sendes til tredjepart.',
   settings_about2:

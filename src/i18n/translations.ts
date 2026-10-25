@@ -91,6 +91,15 @@ const en = {
   common_retry: 'Try again',
   common_ok: 'OK',
   openAlert_title: 'Status on open',
+  err_network:
+    'Cannot reach the server. Check the address, that the phone is on the same network, and that Dockhand is running.',
+  err_timeout: 'Timed out – could not reach the server.',
+  err_unauthorized: 'Invalid or expired token.',
+  err_forbidden: 'Token lacks access to this action.',
+  err_request_failed: 'Request failed ({status}).',
+  err_deploy_failed: 'Deploy failed.',
+  err_restart_failed: 'Restart failed.',
+  image_unknown: 'unknown image',
   openAlert_updates: '{n} containers have updates available',
   openAlert_stopped: '{n} containers are stopped',
 
@@ -271,6 +280,15 @@ const nb: Record<TransKey, string> = {
   common_retry: 'Prøv igjen',
   common_ok: 'OK',
   openAlert_title: 'Status ved åpning',
+  err_network:
+    'Kan ikke nå serveren. Sjekk adresse, at telefonen er på samme nettverk, og at Dockhand kjører.',
+  err_timeout: 'Tidsavbrudd – klarte ikke nå serveren.',
+  err_unauthorized: 'Ugyldig eller utløpt token.',
+  err_forbidden: 'Token mangler tilgang til denne handlingen.',
+  err_request_failed: 'Forespørsel feilet ({status}).',
+  err_deploy_failed: 'Deploy feilet.',
+  err_restart_failed: 'Omstart feilet.',
+  image_unknown: 'ukjent image',
   openAlert_updates: '{n} containere har oppdatering tilgjengelig',
   openAlert_stopped: '{n} containere er stoppet',
 
@@ -449,4 +467,17 @@ export function stackSourceLabel(sourceType: string | null, lang: AppLang): stri
   if (!sourceType) return '';
   const key = STACK_SOURCE_KEYS[sourceType.toLowerCase()];
   return key ? translate(lang, key) : sourceType;
+}
+
+// ------------------------------------------------------------- globalt språk
+// Brukes av moduler utenfor React (f.eks. API-klienten) for å hente
+// gjeldende språk uten prop-drilling.
+let currentLang: AppLang = 'en';
+
+export function setCurrentLang(lang: AppLang): void {
+  currentLang = lang;
+}
+
+export function getCurrentLang(): AppLang {
+  return currentLang;
 }

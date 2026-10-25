@@ -9,6 +9,7 @@
  */
 
 import type { Container, ComposeStack, ContainerInspect, DockhandEnvironment, LogLine, StackContainer } from '../types';
+import { getCurrentLang, translate } from '../i18n/translations';
 
 export class ApiError extends Error {
   status: number;
@@ -84,27 +85,25 @@ export class DockhandClient {
       const data = text ? safeJson(text) : null;
 
       if (!res.ok) {
+        const lang = getCurrentLang();
         const msg =
           pickMessage(data) ??
           (res.status === 401
-            ? 'Ugyldig eller utløpt token.'
+            ? translate(lang, 'err_unauthorized')
             : res.status === 403
-              ? 'Token mangler tilgang til denne handlingen.'
-              : `Forespørsel feilet (${res.status}).`);
+              ? translate(lang, 'err_forbidden')
+              : translate(lang, 'err_request_failed', { status: res.status }));
         throw new ApiError(res.status, msg);
       }
       return data as T;
     } catch (e) {
       if (e instanceof ApiError) throw e;
       if (e instanceof DOMException && e.name === 'AbortError') {
-        throw new ApiError(0, 'Tidsavbrudd – klarte ikke nå serveren.');
+        throw new ApiError(0, translate(getCurrentLang(), 'err_timeout'));
       }
       const raw = e instanceof Error ? e.message : String(e);
       if (/network|fetch|failed/i.test(raw)) {
-        throw new ApiError(
-          0,
-          'Kan ikke nå serveren. Sjekk adresse, at telefonen er på samme nettverk, og at Dockhand kjører.',
-        );
+        throw new ApiError(0, translate(getCurrentLang(), 'err_network'));
       }
       throw new ApiError(0, raw);
     } finally {
@@ -166,7 +165,7 @@ export class DockhandClient {
       },
     );
     if (res && res.success === false) {
-      throw new ApiError(0, res.error || 'Deploy feilet.');
+      throw new ApiError(0, res.error || translate(getCurrentLang(), 'err_deploy_failed'));
     }
   }
 
@@ -181,7 +180,7 @@ export class DockhandClient {
       },
     );
     if (res && res.success === false) {
-      throw new ApiError(0, res.error || 'Omstart feilet.');
+      throw new ApiError(0, res.error || translate(getCurrentLang(), 'err_restart_failed'));
     }
   }
 
@@ -394,7 +393,7 @@ function normalizeStackContainer(raw: unknown): StackContainer | null {
     name: name || id,
     service: firstString(o, 'service', 'Service') || (name || id),
     state,
-    image: firstString(o, 'image', 'Image') || 'ukjent image',
+    image: firstString(o, 'image', 'Image') || translate(getCurrentLang(), 'image_unknown'),
     updateAvailable:
       o['updateAvailable'] === true ||
       o['hasUpdate'] === true ||
@@ -520,7 +519,7 @@ function normalizeContainer(raw: unknown): Container | null {
   return {
     id: id || name,
     name: name || id,
-    image: image || 'ukjent image',
+    image: image || translate(getCurrentLang(), 'image_unknown'),
     state: state.toLowerCase(),
     statusText,
     updateAvailable,

@@ -17,6 +17,7 @@ import { DockhandClient } from '../api/client';
 import {
   resolveLang,
   translate,
+  setCurrentLang,
   type AppLang,
   type LangChoice,
   type TransKey,
@@ -80,6 +81,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     () => resolveLang(langChoice, deviceLanguageCode()),
     [langChoice],
   );
+
+  useEffect(() => {
+    setCurrentLang(lang);
+  }, [lang]);
 
   const t = useCallback(
     (key: TransKey, vars?: Record<string, string | number>) => translate(lang, key, vars),

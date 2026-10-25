@@ -19,7 +19,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -33,7 +33,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -47,7 +47,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -61,7 +61,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -75,7 +75,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -89,7 +89,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -103,7 +103,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..
@@ -117,7 +117,7 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm
+      - apt-get install -y -t forky npm openjdk-17-jdk-headless
     gradle:
       - yes
     prebuild: npm ci --prefix=..

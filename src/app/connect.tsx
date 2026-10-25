@@ -65,6 +65,9 @@ export default function ConnectScreen() {
             autoCorrect={false}
             keyboardType="url"
           />
+          {url.trim().toLowerCase().startsWith('http://') ? (
+            <Text style={styles.httpWarning}>{t('connect_httpWarning')}</Text>
+          ) : null}
 
           <Text style={styles.label}>{t('connect_token')}</Text>
           <TextInput
@@ -128,4 +131,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   hint: { color: colors.textDim, fontSize: 12, lineHeight: 18, marginTop: 8 },
+  httpWarning: { color: colors.amber, fontSize: 12, lineHeight: 18, marginTop: 6 },
 });

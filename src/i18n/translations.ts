@@ -24,6 +24,8 @@ const en = {
   connect_missingToken: 'Paste an API token (starts with dh_).',
   connect_noEnvironments: 'Connected, but no environments to show.',
   connect_failedPrefix: 'Could not connect: ',
+  connect_httpWarning:
+    'HTTP is unencrypted: the address, token and data are sent in plain text. Use HTTPS whenever possible.',
 
   // Navigasjon
   nav_environments: 'Environments',
@@ -219,6 +221,8 @@ const nb: Record<TransKey, string> = {
   connect_missingToken: 'Lim inn en API-token (starter med dh_).',
   connect_noEnvironments: 'Tilkoblet, men ingen miljøer å vise.',
   connect_failedPrefix: 'Kunne ikke koble til: ',
+  connect_httpWarning:
+    'HTTP er ukryptert: adresse, token og data sendes i klartekst. Bruk HTTPS når det er mulig.',
 
   nav_environments: 'Miljøer',
   nav_containers: 'Containere',

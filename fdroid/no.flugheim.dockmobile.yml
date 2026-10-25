@@ -75,7 +75,16 @@ Builds:
     prebuild:
       - npm ci --prefix=..
 
+  - versionName: 1.5.1
+    versionCode: 8
+    commit: 20709aa216d31a6278adbde120f34fa7878f0ba3
+    subdir: android
+    gradle:
+      - yes
+    prebuild:
+      - npm ci --prefix=..
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.5.0
-CurrentVersionCode: 7
+CurrentVersion: 1.5.1
+CurrentVersionCode: 8

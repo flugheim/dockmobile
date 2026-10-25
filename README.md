@@ -56,6 +56,9 @@ fast and simple for daily use, with one focus: **keeping your containers updated
 ## Download & Releases
 
 - **GitHub Releases**: Download prebuilt `.apk` files directly from the [Releases](https://github.com/flugheim/dockmobile/releases) tab.
+- **Obtainium**: Install and auto-update via [Obtainium](https://github.com/ImranR98/Obtainium) – tap
+  [this link](https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/flugheim/dockmobile)
+  to add DockMobile to Obtainium, or add `https://github.com/flugheim/dockmobile` manually.
 - **Automated CI/CD**: Every push to `master` and every version tag runs a full test suite and builds a release APK automatically via GitHub Actions.
 
 ## Building the APK

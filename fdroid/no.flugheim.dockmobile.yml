@@ -19,10 +19,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -33,10 +36,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -47,10 +53,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -61,10 +70,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -75,10 +87,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -89,10 +104,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -103,10 +121,13 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
@@ -117,14 +138,34 @@ Builds:
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
       - apt-get update
-      - apt-get install -y -t forky npm openjdk-17-jdk-headless
+      - apt-get install -y -t forky npm
     gradle:
       - yes
-    prebuild: npm ci --prefix=..
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
+    scandelete:
+      - node_modules
+
+  - versionName: 1.5.3
+    versionCode: 10
+    commit: 0ce63b7f53970957d1fbcf94f5d42451aada93cc
+    subdir: android
+    sudo:
+      - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
+      - apt-get update
+      - apt-get install -y -t forky npm
+    gradle:
+      - yes
+    prebuild:
+      - npm ci --prefix=..
+      - sed -i '/jvmToolchain/s/17/21/' ../node_modules/@react-native/gradle-plugin/*/build.gradle.kts
+      - sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g' -e 's/jvmToolchain(17)/jvmToolchain(21)/g' ../node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/JdkConfiguratorUtils.kt
     scandelete:
       - node_modules
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.5.2
-CurrentVersionCode: 9
+CurrentVersion: 1.5.3
+CurrentVersionCode: 10

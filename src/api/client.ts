@@ -184,6 +184,31 @@ export class DockhandClient {
     }
   }
 
+  /** Oppretter (og valgfritt deployer) en ny Compose-stack. */
+  async createStack(
+    name: string,
+    compose: string,
+    start: boolean,
+    envVars?: { key: string; value: string; isSecret?: boolean }[],
+  ): Promise<void> {
+    const res = await this.request<{ success?: boolean; error?: string }>(
+      '/api/stacks',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          name: name.trim(),
+          compose,
+          start,
+          envVars: envVars ?? [],
+        }),
+        timeoutMs: 300000,
+      },
+    );
+    if (res && res.success === false) {
+      throw new ApiError(0, res.error || translate(getCurrentLang(), 'err_request_failed', { status: 0 }));
+    }
+  }
+
   /** Trigger en sjekk for tilgjengelige oppdateringer (kjører som jobb). */
   async triggerUpdateCheck(): Promise<void> {
     await this.request<unknown>('/api/containers/check-updates', {

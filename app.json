@@ -2,7 +2,7 @@
   "expo": {
     "name": "DockMobile",
     "slug": "dockhand-app",
-    "version": "1.5.3",
+    "version": "1.5.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "dockhand",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "no.flugheim.dockmobile",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

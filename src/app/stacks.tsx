@@ -179,6 +179,13 @@ export default function StacksScreen() {
         </Pressable>
         <View style={styles.topBarActions}>
           <Button
+            label={t('stack_create')}
+            variant="primary"
+            small
+            onPress={() => router.push('/create-stack')}
+            testID="create-stack"
+          />
+          <Button
             label={t('nav_containers')}
             variant="ghost"
             small

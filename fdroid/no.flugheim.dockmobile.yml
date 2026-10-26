@@ -12,9 +12,9 @@ RepoType: git
 Repo: https://github.com/flugheim/dockmobile
 
 Builds:
-  - versionName: 1.5.3
-    versionCode: 10
-    commit: 0ce63b7f53970957d1fbcf94f5d42451aada93cc
+  - versionName: 1.5.4
+    versionCode: 11
+    commit: c5d2eafd3de919a10cb9f3ad757206a9d651bb27
     subdir: android
     sudo:
       - echo "deb https://deb.debian.org/debian forky main" > /etc/apt/sources.list.d/forky.list
@@ -50,5 +50,5 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.5.3
-CurrentVersionCode: 10
+CurrentVersion: 1.5.4
+CurrentVersionCode: 11

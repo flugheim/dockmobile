@@ -15,7 +15,7 @@ import { useSettings } from '../state/SettingsContext';
 import { colors, radius } from '../theme';
 
 export default function CreateStackScreen() {
-  const { client, status, t, settings } = useSettings();
+  const { client, status, t } = useSettings();
   const router = useRouter();
   const [name, setName] = useState('');
   const [compose, setCompose] = useState('');

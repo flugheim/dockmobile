@@ -34,6 +34,7 @@ export function ConfirmDeleteModal({
   const [typed, setTyped] = useState('');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (visible) setTyped('');
   }, [visible]);
 

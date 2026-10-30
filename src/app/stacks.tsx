@@ -2,9 +2,11 @@ import React, { useCallback, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Modal,
   Pressable,
   RefreshControl,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -15,7 +17,7 @@ import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
-import { colors } from '../theme';
+import { colors, radius } from '../theme';
 
 export default function StacksScreen() {
   const {
@@ -39,6 +41,9 @@ export default function StacksScreen() {
   const [busyName, setBusyName] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ComposeStack | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deployTarget, setDeployTarget] = useState<string | null>(null);
+  const [deployOpts, setDeployOpts] = useState({ pull: true, build: false, forceRecreate: false });
+  const [deployBusy, setDeployBusy] = useState(false);
 
   const load = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
@@ -102,14 +107,24 @@ export default function StacksScreen() {
     }
   }
 
-  function confirmDeploy(name: string) {
-    Alert.alert(t('stack_deployConfirmTitle'), t('stack_deployConfirmMessage'), [
-      { text: t('common_cancel'), style: 'cancel' },
-      {
-        text: t('stack_deploy'),
-        onPress: () => void runStackAction(name, () => client!.deployStack(name)),
-      },
-    ]);
+  function openDeployModal(name: string) {
+    setDeployOpts({ pull: true, build: false, forceRecreate: false });
+    setDeployTarget(name);
+  }
+
+  async function runDeploy() {
+    if (!client || !deployTarget) return;
+    const name = deployTarget;
+    setDeployBusy(true);
+    try {
+      await client.deployStack(name, deployOpts);
+      setDeployTarget(null);
+      setTimeout(() => void load('refresh'), 1500);
+    } catch (e) {
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeployBusy(false);
+    }
   }
 
   function confirmRestart(name: string) {
@@ -245,12 +260,39 @@ export default function StacksScreen() {
             expanded={expanded.has(item.name)}
             busy={busyName === item.name}
             onToggle={() => toggleExpanded(item.name)}
-            onDeploy={() => confirmDeploy(item.name)}
+            onDeploy={() => openDeployModal(item.name)}
             onRestart={() => confirmRestart(item.name)}
             onDelete={() => setDeleteTarget(item)}
           />
         )}
       />
+
+      <Modal visible={!!deployTarget} transparent animationType="fade" onRequestClose={() => setDeployTarget(null)}>
+        <Pressable style={modalStyles.backdrop} onPress={() => setDeployTarget(null)}>
+          <Pressable style={modalStyles.card} onPress={() => {}}>
+            <Text style={modalStyles.title}>{t('stack_deployOptionsTitle')}</Text>
+            <Text style={modalStyles.stackName}>{deployTarget}</Text>
+
+            <View style={modalStyles.row}>
+              <Text style={modalStyles.label}>{t('stack_deployPull')}</Text>
+              <Switch value={deployOpts.pull} onValueChange={(v) => setDeployOpts((o) => ({ ...o, pull: v }))} trackColor={{ false: colors.border, true: colors.accent }} thumbColor="#fff" />
+            </View>
+            <View style={modalStyles.row}>
+              <Text style={modalStyles.label}>{t('stack_deployBuild')}</Text>
+              <Switch value={deployOpts.build} onValueChange={(v) => setDeployOpts((o) => ({ ...o, build: v }))} trackColor={{ false: colors.border, true: colors.accent }} thumbColor="#fff" />
+            </View>
+            <View style={modalStyles.row}>
+              <Text style={modalStyles.label}>{t('stack_deployForceRecreate')}</Text>
+              <Switch value={deployOpts.forceRecreate} onValueChange={(v) => setDeployOpts((o) => ({ ...o, forceRecreate: v }))} trackColor={{ false: colors.border, true: colors.accent }} thumbColor="#fff" />
+            </View>
+
+            <View style={modalStyles.actions}>
+              <Button label={t('common_cancel')} variant="secondary" small onPress={() => setDeployTarget(null)} disabled={deployBusy} />
+              <Button label={t('stack_deployRun')} variant="primary" small loading={deployBusy} disabled={deployBusy} onPress={() => void runDeploy()} />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <ConfirmDeleteModal
         visible={!!deleteTarget}
@@ -284,4 +326,29 @@ const styles = StyleSheet.create({
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
+});
+
+const modalStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
+    gap: 12,
+  },
+  title: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  stackName: { color: colors.accent, fontSize: 14, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  label: { color: colors.text, fontSize: 14 },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 8 },
 });

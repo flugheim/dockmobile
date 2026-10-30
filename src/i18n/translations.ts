@@ -92,6 +92,12 @@ const en = {
   common_stop: 'Stop',
   common_retry: 'Try again',
   common_ok: 'OK',
+  common_delete: 'Delete',
+  delete_confirmHint: 'Type "{name}" to confirm',
+  delete_containerTitle: 'Delete container?',
+  delete_containerMessage: 'The container will be removed.',
+  delete_stackTitle: 'Delete stack?',
+  delete_stackMessage: 'The stack and its containers will be removed.',
   openAlert_title: 'Status on open',
   err_network:
     'Cannot reach the server. Check the address, that the phone is on the same network, and that Dockhand is running.',
@@ -111,6 +117,7 @@ const en = {
   card_start: 'Start',
   card_stop: 'Stop',
   card_restart: 'Restart',
+  card_delete: 'Delete',
 
   // Container-tilstander
   state_running: 'Running',
@@ -300,6 +307,12 @@ const nb: Record<TransKey, string> = {
   common_stop: 'Stopp',
   common_retry: 'Prøv igjen',
   common_ok: 'OK',
+  common_delete: 'Slett',
+  delete_confirmHint: 'Skriv «{name}» for å bekrefte',
+  delete_containerTitle: 'Slette container?',
+  delete_containerMessage: 'Containeren fjernes.',
+  delete_stackTitle: 'Slette stack?',
+  delete_stackMessage: 'Stacken og containerne fjernes.',
   openAlert_title: 'Status ved åpning',
   err_network:
     'Kan ikke nå serveren. Sjekk adresse, at telefonen er på samme nettverk, og at Dockhand kjører.',
@@ -318,6 +331,7 @@ const nb: Record<TransKey, string> = {
   card_start: 'Start',
   card_stop: 'Stopp',
   card_restart: 'Omstart',
+  card_delete: 'Slett',
 
   state_running: 'Kjører',
   state_exited: 'Stoppet',

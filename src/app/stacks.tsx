@@ -11,6 +11,7 @@ import {
 import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 import type { ComposeStack, DockhandEnvironment } from '../types';
 import { StackCard } from '../components/StackCard';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
@@ -36,6 +37,8 @@ export default function StacksScreen() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [busyName, setBusyName] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ComposeStack | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const load = useCallback(
     async (mode: 'initial' | 'refresh' = 'initial') => {
@@ -118,6 +121,20 @@ export default function StacksScreen() {
         onPress: () => void runStackAction(name, () => client!.restartStack(name)),
       },
     ]);
+  }
+
+  async function handleDeleteStack() {
+    if (!client || !deleteTarget) return;
+    setDeleteBusy(true);
+    try {
+      await client.deleteStack(deleteTarget.name);
+      setDeleteTarget(null);
+      void load('refresh');
+    } catch (e) {
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeleteBusy(false);
+    }
   }
 
   if (status === 'disconnected') {
@@ -230,8 +247,19 @@ export default function StacksScreen() {
             onToggle={() => toggleExpanded(item.name)}
             onDeploy={() => confirmDeploy(item.name)}
             onRestart={() => confirmRestart(item.name)}
+            onDelete={() => setDeleteTarget(item)}
           />
         )}
+      />
+
+      <ConfirmDeleteModal
+        visible={!!deleteTarget}
+        expectedName={deleteTarget?.name ?? ''}
+        title={t('delete_stackTitle')}
+        message={t('delete_stackMessage')}
+        busy={deleteBusy}
+        onConfirm={() => void handleDeleteStack()}
+        onCancel={() => setDeleteTarget(null)}
       />
     </View>
   );

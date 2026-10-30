@@ -169,6 +169,23 @@ export class DockhandClient {
     }
   }
 
+  /** Fjerner en stack (compose-fil + containere). */
+  async deleteStack(name: string): Promise<void> {
+    await this.request<unknown>(`/api/stacks/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+      timeoutMs: 300000,
+    });
+  }
+
+  /** Stopper en stack (fjerner containere og nettverk). */
+  async downStack(name: string, removeVolumes = false): Promise<void> {
+    await this.request<unknown>(`/api/stacks/${encodeURIComponent(name)}/down`, {
+      method: 'POST',
+      body: JSON.stringify({ removeVolumes }),
+      timeoutMs: 300000,
+    });
+  }
+
   /** Omstarter en stack. */
   async restartStack(name: string, mode: 'restart' | 'ordered' | 'recreate' = 'restart'): Promise<void> {
     const res = await this.request<{ success?: boolean; error?: string }>(
@@ -223,6 +240,14 @@ export class DockhandClient {
 
   async stopContainer(id: string): Promise<void> {
     await this.action(id, 'stop');
+  }
+
+  /** Fjerner en container. */
+  async deleteContainer(id: string): Promise<void> {
+    await this.request<unknown>(`/api/containers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      timeoutMs: 120000,
+    });
   }
 
   async restartContainer(id: string): Promise<void> {

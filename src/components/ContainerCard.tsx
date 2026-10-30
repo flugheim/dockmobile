@@ -13,6 +13,7 @@ interface Props {
   onStop: () => void;
   onRestart: () => void;
   onUpdate: () => void;
+  onDelete: () => void;
 }
 
 export function ContainerCard({
@@ -23,6 +24,7 @@ export function ContainerCard({
   onStop,
   onRestart,
   onUpdate,
+  onDelete,
 }: Props) {
   const { t, lang } = useSettings();
   const running = c.state === 'running';
@@ -78,6 +80,7 @@ export function ContainerCard({
           onPress={onRestart}
           disabled={busy}
         />
+        <Button label={t('card_delete')} variant="danger" small onPress={onDelete} disabled={busy} />
       </View>
     </Pressable>
   );

@@ -11,6 +11,7 @@ import {
 import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 
 import { ContainerCard } from '../components/ContainerCard';
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
@@ -41,6 +42,8 @@ export default function ContainersScreen() {
   const [updatingAll, setUpdatingAll] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Container | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const updatePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(
@@ -195,6 +198,20 @@ export default function ContainersScreen() {
     await selectEnvironment(env);
   }
 
+  async function handleDeleteContainer() {
+    if (!client || !deleteTarget) return;
+    setDeleteBusy(true);
+    try {
+      await client.deleteContainer(deleteTarget.id);
+      setDeleteTarget(null);
+      void load('refresh');
+    } catch (e) {
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
   if (status === 'disconnected') {
     return <Redirect href="/connect" />;
   }
@@ -346,8 +363,19 @@ export default function ContainersScreen() {
             }}
             onRestart={() => void runAction(item.id, () => client!.restartContainer(item.id))}
             onUpdate={() => void updateContainers([item.id])}
+            onDelete={() => setDeleteTarget(item)}
           />
         )}
+      />
+
+      <ConfirmDeleteModal
+        visible={!!deleteTarget}
+        expectedName={deleteTarget?.name ?? ''}
+        title={t('delete_containerTitle')}
+        message={t('delete_containerMessage')}
+        busy={deleteBusy}
+        onConfirm={() => void handleDeleteContainer()}
+        onCancel={() => setDeleteTarget(null)}
       />
     </View>
   );

@@ -53,6 +53,15 @@ fast and simple for daily use, with one focus: **keeping your containers updated
 3. Paste the token (`dh_...`).
 4. Tap **Connect** – the app verifies authentication and fetches all your environments.
 
+## Screenshots
+
+<!-- Drop PNG/JPG files into the screenshots/ folder and reference them below. -->
+<!-- Example: ![Dashboard](screenshots/dashboard.png) -->
+
+| Dashboard | Containers | Stacks |
+|---|---|---|
+| ![Dashboard](screenshots/dashboard.png) | ![Containers](screenshots/containers.png) | ![Stacks](screenshots/stacks.png) |
+
 ## Download & Releases
 
 - **GitHub Releases**: Download prebuilt `.apk` files directly from the [Releases](https://github.com/flugheim/dockmobile/releases) tab.

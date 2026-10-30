@@ -19,9 +19,10 @@ interface Props {
   onToggle: () => void;
   onDeploy: () => void;
   onRestart: () => void;
+  onDelete: () => void;
 }
 
-export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart }: Props) {
+export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart, onDelete }: Props) {
   const { t, lang } = useSettings();
   const hasContainers = stack.containers.length > 0;
   const statusColor = stackStatusColor(stack.status);
@@ -85,6 +86,14 @@ export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart
           disabled={busy}
           onPress={onRestart}
           testID={`restart-${stack.name}`}
+        />
+        <Button
+          label={t('card_delete')}
+          variant="danger"
+          small
+          disabled={busy}
+          onPress={onDelete}
+          testID={`delete-${stack.name}`}
         />
       </View>
 

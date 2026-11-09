@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius } from '../theme';
 import { useSettings } from '../state/SettingsContext';
 import type { EnvironmentOverview } from '../types';
+import { HostInfoModal } from './HostInfoModal';
 
 interface Props {
   overview: EnvironmentOverview;
@@ -14,6 +15,7 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
   const { t } = useSettings();
   const { environment, totalContainers, runningContainers, stoppedContainers, updatesAvailable, loading, error } =
     overview;
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const isOffline = !!error;
 
@@ -99,10 +101,24 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
                   ? t('overview_containerCount_one')
                   : t('overview_containerCount_other', { n: totalContainers })}
             </Text>
-            <Text style={styles.tapPrompt}>{t('overview_tapToOpen')} →</Text>
+            <View style={styles.footerActions}>
+              <Pressable
+                style={styles.infoButton}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setInfoOpen(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('hostInfo_title')}
+              >
+                <Text style={styles.infoButtonText}>ℹ</Text>
+              </Pressable>
+              <Text style={styles.tapPrompt}>{t('overview_tapToOpen')} →</Text>
+            </View>
           </View>
         </View>
       )}
+      <HostInfoModal visible={infoOpen} environment={environment} onClose={() => setInfoOpen(false)} />
     </Pressable>
   );
 }
@@ -213,6 +229,26 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     paddingTop: 10,
+  },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  infoButtonText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '700',
   },
   totalText: {
     color: colors.textDim,

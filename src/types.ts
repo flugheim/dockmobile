@@ -99,3 +99,35 @@ export interface ConnectionSettings {
 }
 
 export type ConnectionStatus = 'loading' | 'disconnected' | 'connected';
+
+/** Vertsinfo (server) som Dockhand presenterer via GET /api/host. */
+export interface HostInfo {
+  hostname: string;
+  ipAddress: string;
+  platform: string;
+  arch: string;
+  cpus: number;
+  totalMemory: number;
+  freeMemory: number;
+  uptime: number;
+  dockerVersion: string;
+  dockerContainers: number;
+  dockerContainersRunning: number;
+  dockerImages: number;
+  environment?: { id?: number | string; name?: string; connectionType?: string } | null;
+}
+
+/** Systeminfo som Dockhand presenterer via GET /api/system. */
+export interface SystemInfo {
+  docker?: { version?: string; apiVersion?: string } | null;
+  host?: { name?: string; cpus?: number; memory?: number } | null;
+  runtime?: { runtimeName?: string; platform?: string } | null;
+  database?: { type?: string; schemaVersion?: number } | null;
+  stats?: {
+    containers?: { total?: number; running?: number; stopped?: number };
+    images?: number;
+    volumes?: number;
+    networks?: number;
+    stacks?: number;
+  } | null;
+}

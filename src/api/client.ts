@@ -8,7 +8,7 @@
  * normaliseres (se normalize* under).
  */
 
-import type { Container, ComposeStack, ContainerInspect, DockhandEnvironment, LogLine, StackContainer } from '../types';
+import type { Container, ComposeStack, ContainerInspect, DockhandEnvironment, HostInfo, LogLine, StackContainer, SystemInfo } from '../types';
 import { getCurrentLang, translate } from '../i18n/translations';
 
 export class ApiError extends Error {
@@ -122,6 +122,20 @@ export class DockhandClient {
         name: String(e?.name ?? e?.Name ?? `Miljø ${e?.id ?? ''}`),
       }))
       .filter((e) => e.id.length > 0);
+  }
+
+  // ------------------------------------------------------------- vert/server
+
+  /** Vertsinfo for gjeldende miljø (hostname, IP, plattform, Docker-versjon osv.). */
+  async getHostInfo(): Promise<HostInfo> {
+    const data = await this.request<unknown>('/api/host');
+    return normalizeHostInfo(data);
+  }
+
+  /** Systeminfo for Dockhand-serveren (runtime, database, statistikk). */
+  async getSystemInfo(): Promise<SystemInfo> {
+    const data = await this.request<unknown>('/api/system');
+    return (data && typeof data === 'object' ? (data as SystemInfo) : {}) as SystemInfo;
   }
 
   // ------------------------------------------------------------- containere
@@ -581,6 +595,33 @@ const ANSI_RE =
 
 export function stripAnsi(text: string): string {
   return text.replace(ANSI_RE, '');
+}
+
+export function normalizeHostInfo(data: unknown): HostInfo {
+  const o = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  const env = o['environment'];
+  return {
+    hostname: str(o['hostname']),
+    ipAddress: str(o['ipAddress']),
+    platform: str(o['platform']),
+    arch: str(o['arch']),
+    cpus: num(o['cpus']),
+    totalMemory: num(o['totalMemory']),
+    freeMemory: num(o['freeMemory']),
+    uptime: num(o['uptime']),
+    dockerVersion: str(o['dockerVersion']),
+    dockerContainers: num(o['dockerContainers']),
+    dockerContainersRunning: num(o['dockerContainersRunning']),
+    dockerImages: num(o['dockerImages']),
+    environment:
+      env && typeof env === 'object'
+        ? (env as { id?: number | string; name?: string; connectionType?: string })
+        : null,
+  };
+}
+
+function num(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
 export function normalizeLogs(data: unknown): LogLine[] {

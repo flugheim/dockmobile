@@ -109,7 +109,7 @@ export default function SettingsScreen() {
 
       <Text style={styles.groupTitle}>{t('settings_about')}</Text>
       <View style={styles.card}>
-        <Row label={t('settings_version')} value={Constants.expoConfig?.version ?? '1.5.2'} />
+        <Row label={t('settings_version')} value={Constants.expoConfig?.version ?? '1.5.6'} />
         <Button
           label={t('settings_changelog')}
           variant="secondary"

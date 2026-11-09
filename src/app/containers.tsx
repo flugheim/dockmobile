@@ -13,6 +13,7 @@ import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { ContainerCard } from '../components/ContainerCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
+import { HostInfoModal } from '../components/HostInfoModal';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
 import type { TransKey } from '../i18n/translations';
@@ -31,6 +32,7 @@ const FILTERS: { key: Filter; labelKey: TransKey }[] = [
 export default function ContainersScreen() {
   const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments, environmentsLoading } = useSettings();
   const router = useRouter();
+  const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
   const [containers, setContainers] = useState<Container[]>([]);
   const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,7 @@ export default function ContainersScreen() {
   const [updatingAll, setUpdatingAll] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Container | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const updatePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -268,6 +271,14 @@ export default function ContainersScreen() {
           </View>
         </Pressable>
         <View style={styles.topBarActions}>
+          <Pressable
+            style={styles.infoButton}
+            onPress={() => setInfoOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('hostInfo_title')}
+          >
+            <Text style={styles.infoButtonText}>ℹ</Text>
+          </Pressable>
           <Button
             label={t('nav_stacks')}
             variant="ghost"
@@ -294,6 +305,8 @@ export default function ContainersScreen() {
         onSelect={(env) => void onSelectEnvironment(env)}
         onClose={() => setPickerOpen(false)}
       />
+
+      <HostInfoModal visible={infoOpen} environment={currentEnv} onClose={() => setInfoOpen(false)} />
 
       {withUpdates.length > 0 ? (
         <View style={styles.updateBanner}>
@@ -399,6 +412,22 @@ const styles = StyleSheet.create({
   envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  infoButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: 4,
+  },
+  infoButtonText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '700',
+  },
   updateBanner: {
     marginHorizontal: 16,
     marginTop: 4,

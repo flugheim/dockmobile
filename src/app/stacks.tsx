@@ -15,6 +15,7 @@ import type { ComposeStack, DockhandEnvironment } from '../types';
 import { StackCard } from '../components/StackCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
+import { HostInfoModal } from '../components/HostInfoModal';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
 import { colors, radius } from '../theme';
@@ -32,12 +33,14 @@ export default function StacksScreen() {
     environmentsLoading,
   } = useSettings();
   const router = useRouter();
+  const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
   const [stacks, setStacks] = useState<ComposeStack[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [busyName, setBusyName] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ComposeStack | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -210,6 +213,14 @@ export default function StacksScreen() {
           </View>
         </Pressable>
         <View style={styles.topBarActions}>
+          <Pressable
+            style={styles.infoButton}
+            onPress={() => setInfoOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('hostInfo_title')}
+          >
+            <Text style={styles.infoButtonText}>ℹ</Text>
+          </Pressable>
           <Button
             label={t('stack_create')}
             variant="primary"
@@ -234,6 +245,8 @@ export default function StacksScreen() {
         onSelect={(env) => void onSelectEnvironment(env)}
         onClose={() => setPickerOpen(false)}
       />
+
+      <HostInfoModal visible={infoOpen} environment={currentEnv} onClose={() => setInfoOpen(false)} />
 
       {error ? <ErrorBanner message={error} onRetry={() => void load('refresh')} /> : null}
 
@@ -325,6 +338,22 @@ const styles = StyleSheet.create({
   envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  infoButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: 4,
+  },
+  infoButtonText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '700',
+  },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 });
 

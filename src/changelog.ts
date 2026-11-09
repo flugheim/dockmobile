@@ -1,4 +1,7 @@
-export const CHANGELOG = `1.5.6
+export const CHANGELOG = `1.5.7
+- Server info modal is now scrollable on small screens.
+
+1.5.6
 - Server info: new info button (ℹ) on each environment card and on container/stack screens showing host IP, platform, CPU, memory, uptime, Docker version and system stats.
 
 1.5.5

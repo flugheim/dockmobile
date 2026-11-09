@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Button } from './ui';
 import { useSettings } from '../state/SettingsContext';
@@ -45,6 +46,8 @@ function formatUptime(seconds: number): string {
 
 export function HostInfoModal({ visible, environment, onClose }: Props) {
   const { settings, t } = useSettings();
+  const { height } = useWindowDimensions();
+  const maxScrollHeight = Math.round(height * 0.55);
   const [host, setHost] = useState<HostInfo | null>(null);
   const [system, setSystem] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -98,7 +101,7 @@ export function HostInfoModal({ visible, environment, onClose }: Props) {
             ) : null}
           </View>
 
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          <ScrollView style={[styles.scroll, { maxHeight: maxScrollHeight }]} contentContainerStyle={styles.scrollContent}>
             {loading ? (
               <Text style={styles.muted}>{t('hostInfo_loading')}</Text>
             ) : error ? (
@@ -183,7 +186,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 460,
-    maxHeight: '85%',
+    maxHeight: '90%',
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -194,8 +197,8 @@ const styles = StyleSheet.create({
   header: { gap: 2 },
   title: { color: colors.text, fontSize: 18, fontWeight: '800' },
   subtitle: { color: colors.accent, fontSize: 13, fontWeight: '600' },
-  scroll: { maxHeight: 420 },
-  scrollContent: { gap: 12 },
+  scroll: { flex: 1, minHeight: 0 },
+  scrollContent: { gap: 12, paddingBottom: 8 },
   section: { gap: 6 },
   sectionTitle: {
     color: colors.textDim,

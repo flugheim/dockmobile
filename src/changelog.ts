@@ -1,4 +1,7 @@
-export const CHANGELOG = `1.5.7
+export const CHANGELOG = `1.5.8
+- Stack environment variables: expanded stack view now shows parsed env vars (secrets masked) and raw .env file.
+
+1.5.7
 - Server info modal is now scrollable on small screens.
 
 1.5.6

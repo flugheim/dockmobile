@@ -68,14 +68,28 @@ export function HostInfoModal({ visible, environment, onClose }: Props) {
           envId: environment.id,
           timeoutMs: 15000,
         });
-        const [h, s] = await Promise.all([
-          client.getHostInfo().catch(() => null),
-          client.getSystemInfo().catch(() => null),
-        ]);
+        let h: HostInfo | null = null;
+        let s: SystemInfo | null = null;
+        try {
+          h = await client.getHostInfo();
+        } catch (e) {
+          console.warn('[HostInfoModal] getHostInfo failed:', e);
+        }
+        try {
+          s = await client.getSystemInfo();
+        } catch (e) {
+          console.warn('[HostInfoModal] getSystemInfo failed:', e);
+        }
         if (cancelled) return;
         setHost(h);
         setSystem(s);
-        if (!h && !s) setError(t('hostInfo_error'));
+        if (!h && !s) {
+          setError(t('hostInfo_error'));
+        } else if (!h || !s) {
+          // Vis advarsel hvis kun ett av kallene lyktes
+          const missing = !h ? 'host' : 'system';
+          setError(`${t('hostInfo_partialError', { missing })}`);
+        }
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : String(e));

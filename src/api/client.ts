@@ -135,7 +135,7 @@ export class DockhandClient {
   /** Systeminfo for Dockhand-serveren (runtime, database, statistikk). */
   async getSystemInfo(): Promise<SystemInfo> {
     const data = await this.request<unknown>('/api/system');
-    return (data && typeof data === 'object' ? (data as SystemInfo) : {}) as SystemInfo;
+    return normalizeSystemInfo(data);
   }
 
   // ------------------------------------------------------------- containere
@@ -162,6 +162,22 @@ export class DockhandClient {
   async getStacks(): Promise<ComposeStack[]> {
     const data = await this.request<unknown>('/api/stacks');
     return normalizeStacks(data);
+  }
+
+  /** Henter parsede miljøvariabler for en stack. */
+  async getStackEnv(name: string): Promise<{ key: string; value: string; isSecret?: boolean }[]> {
+    const data = await this.request<unknown>(`/api/stacks/${encodeURIComponent(name)}/env`);
+    return normalizeStackEnv(data);
+  }
+
+  /** Henter rå .env-filinnhold for en stack. */
+  async getStackEnvRaw(name: string): Promise<string> {
+    const data = await this.request<unknown>(`/api/stacks/${encodeURIComponent(name)}/env/raw`);
+    return (data && typeof data === 'object' && 'content' in data && typeof data.content === 'string')
+      ? data.content
+      : typeof data === 'string'
+        ? data
+        : '';
   }
 
   /** Redeployer en stack (pull + recreate). */
@@ -465,6 +481,31 @@ function normalizeStackContainer(raw: unknown): StackContainer | null {
   };
 }
 
+export function normalizeStackEnv(data: unknown): { key: string; value: string; isSecret?: boolean }[] {
+  const list = toArray<any>(data, ['env', 'variables', 'items', 'data']);
+  if (list.length === 0 && data && typeof data === 'object') {
+    // Fallback: objekt med key-value par
+    return Object.entries(data as Record<string, unknown>).map(([k, v]) => ({
+      key: k,
+      value: String(v ?? ''),
+      isSecret: false,
+    }));
+  }
+  const result: { key: string; value: string; isSecret?: boolean }[] = [];
+  for (const v of list) {
+    if (!v || typeof v !== 'object') continue;
+    const o = v as Record<string, unknown>;
+    const key = str(o['key'] ?? o['Key'] ?? o['name'] ?? o['Name']);
+    if (!key) continue;
+    result.push({
+      key,
+      value: str(o['value'] ?? o['Value'] ?? ''),
+      isSecret: o['isSecret'] === true || o['secret'] === true,
+    });
+  }
+  return result;
+}
+
 function str(v: unknown): string {
   return typeof v === 'string' ? v.trim() : v == null ? '' : String(v);
 }
@@ -622,6 +663,33 @@ export function normalizeHostInfo(data: unknown): HostInfo {
 
 function num(v: unknown): number {
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
+export function normalizeSystemInfo(data: unknown): SystemInfo {
+  const o = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  const docker = o['docker'] as Record<string, unknown> | undefined;
+  const host = o['host'] as Record<string, unknown> | undefined;
+  const runtime = o['runtime'] as Record<string, unknown> | undefined;
+  const database = o['database'] as Record<string, unknown> | undefined;
+  const stats = o['stats'] as Record<string, unknown> | undefined;
+  const containers = stats?.['containers'] as Record<string, unknown> | undefined;
+  return {
+    docker: docker ? { version: str(docker['version']), apiVersion: str(docker['apiVersion']) } : undefined,
+    host: host ? { name: str(host['name']), cpus: num(host['cpus']), memory: num(host['memory']) } : undefined,
+    runtime: runtime ? { runtimeName: str(runtime['runtimeName']), platform: str(runtime['platform']) } : undefined,
+    database: database ? { type: str(database['type']), schemaVersion: num(database['schemaVersion']) } : undefined,
+    stats: stats
+      ? {
+          containers: containers
+            ? { total: num(containers['total']), running: num(containers['running']), stopped: num(containers['stopped']) }
+            : undefined,
+          images: num(stats['images']),
+          volumes: num(stats['volumes']),
+          networks: num(stats['networks']),
+          stacks: num(stats['stacks']),
+        }
+      : undefined,
+  };
 }
 
 export function normalizeLogs(data: unknown): LogLine[] {

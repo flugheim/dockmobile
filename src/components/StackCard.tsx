@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ComposeStack } from '../types';
 
@@ -23,9 +23,74 @@ interface Props {
 }
 
 export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart, onDelete }: Props) {
-  const { t, lang } = useSettings();
+  const { t, lang, client } = useSettings();
   const hasContainers = stack.containers.length > 0;
   const statusColor = stackStatusColor(stack.status);
+  const [envVars, setEnvVars] = useState<{ key: string; value: string; isSecret?: boolean }[] | null>(null);
+  const [envRaw, setEnvRaw] = useState<string | null>(null);
+  const [envLoading, setEnvLoading] = useState(false);
+
+  useEffect(() => {
+    if (!expanded || !client || envVars !== null) return;
+    let cancelled = false;
+    (async () => {
+      setEnvLoading(true);
+      try {
+        const [parsed, raw] = await Promise.all([
+          client.getStackEnv(stack.name).catch(() => []),
+          client.getStackEnvRaw(stack.name).catch(() => ''),
+        ]);
+        if (!cancelled) {
+          setEnvVars(parsed);
+          setEnvRaw(raw || null);
+        }
+      } catch {
+        // ignorer feil – vises tomt
+      } finally {
+        if (!cancelled) setEnvLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [expanded, stack.name, client, envVars]);
+
+  // Nullstill cache når stack lukkes - bruk en key på komponenten i stedet
+  // for å tvinge remount, eller bruk en ref for å unngå setState i effect
+
+  const renderEnvVars = () => {
+    if (envLoading) {
+      return <Text style={styles.envLoading}>{t('stack_envLoading')}</Text>;
+    }
+    if (!envVars || envVars.length === 0) {
+      return <Text style={styles.envEmpty}>{t('stack_envEmpty')}</Text>;
+    }
+    return (
+      <View style={styles.envList}>
+        {envVars.map((ev, i) => (
+          <View key={i} style={styles.envRow}>
+            <Text style={styles.envKey}>{ev.key}</Text>
+            <Text style={styles.envValue} selectable>
+              {ev.isSecret ? '********' : ev.value}
+            </Text>
+            {ev.isSecret ? <Text style={styles.secretBadge}>{t('stack_envSecret')}</Text> : null}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderEnvRaw = () => {
+    if (!envRaw) return null;
+    return (
+      <View style={styles.envRawSection}>
+        <Text style={styles.envRawTitle}>{t('stack_envRawTitle')}</Text>
+        <Text style={styles.envRawText} selectable>
+          {envRaw}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <Pressable
@@ -98,26 +163,34 @@ export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart
       </View>
 
       {expanded && hasContainers ? (
-        <View style={styles.containerList}>
-          {stack.containers.map((c) => (
-            <View key={c.id} style={styles.containerRow}>
-              <View style={[styles.dot, styles.smallDot, { backgroundColor: stateColor(c.state) }]} />
-              <View style={styles.containerInfo}>
-                <Text style={styles.containerService} numberOfLines={1}>
-                  {c.service}
-                </Text>
-                <Text style={styles.containerImage} numberOfLines={1}>
-                  {c.image}
-                </Text>
+        <View style={styles.expandedContent}>
+          <View style={styles.containerList}>
+            {stack.containers.map((c) => (
+              <View key={c.id} style={styles.containerRow}>
+                <View style={[styles.dot, styles.smallDot, { backgroundColor: stateColor(c.state) }]} />
+                <View style={styles.containerInfo}>
+                  <Text style={styles.containerService} numberOfLines={1}>
+                    {c.service}
+                  </Text>
+                  <Text style={styles.containerImage} numberOfLines={1}>
+                    {c.image}
+                  </Text>
+                </View>
+                <View style={styles.containerRight}>
+                  {c.updateAvailable ? (
+                    <Text style={styles.updateBadge}>{t('card_update')}</Text>
+                  ) : null}
+                  <Text style={styles.containerState}>{containerStateLabel(c.state, lang)}</Text>
+                </View>
               </View>
-              <View style={styles.containerRight}>
-                {c.updateAvailable ? (
-                  <Text style={styles.updateBadge}>{t('card_update')}</Text>
-                ) : null}
-                <Text style={styles.containerState}>{containerStateLabel(c.state, lang)}</Text>
-              </View>
-            </View>
-          ))}
+            ))}
+          </View>
+
+          <View style={styles.envSection}>
+            <Text style={styles.envSectionTitle}>{t('stack_envTitle')}</Text>
+            {renderEnvVars()}
+            {renderEnvRaw()}
+          </View>
         </View>
       ) : null}
     </Pressable>
@@ -156,4 +229,17 @@ const styles = StyleSheet.create({
   containerRight: { alignItems: 'flex-end', gap: 2 },
   updateBadge: { color: colors.amber, fontSize: 10, fontWeight: '700' },
   containerState: { color: colors.textDim, fontSize: 11, fontWeight: '600' },
+  expandedContent: { gap: 12 },
+  envSection: { gap: 8, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
+  envSectionTitle: { color: colors.textDim, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  envLoading: { color: colors.textDim, fontSize: 12, paddingVertical: 8 },
+  envEmpty: { color: colors.textDim, fontSize: 12, paddingVertical: 8 },
+  envList: { gap: 6 },
+  envRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  envKey: { color: colors.accent, fontSize: 12, fontWeight: '600', minWidth: 100 },
+  envValue: { color: colors.text, fontSize: 12, flex: 1, fontFamily: 'monospace' },
+  secretBadge: { color: colors.amber, fontSize: 10, fontWeight: '700' },
+  envRawSection: { marginTop: 8, gap: 4 },
+  envRawTitle: { color: colors.textDim, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  envRawText: { color: colors.text, fontSize: 11, fontFamily: 'monospace', lineHeight: 16 },
 });

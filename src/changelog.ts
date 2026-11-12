@@ -1,4 +1,7 @@
-export const CHANGELOG = `1.5.10
+export const CHANGELOG = `1.5.11
+- Fix: stacks screen now loads on open (missing useFocusEffect was preventing initial load).
+
+1.5.10
 - Fix: containers screen now loads on open (missing useFocusEffect was preventing initial load).
 
 1.5.9

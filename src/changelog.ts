@@ -1,4 +1,9 @@
-export const CHANGELOG = `1.5.8
+export const CHANGELOG = `1.5.9
+- Ikoner: alle knapper, kort og modaler bruker nå Nerd Font-glyfer (JetBrainsMono Nerd Font) i stedet for emoji/tekst.
+- Tema: endret til Tokyo Night-fargepalett (bakgrunn #1a1b26, accent #7aa2f7, osv.) og JetBrainsMono Nerd Font som UI-font.
+- Nye komponenter: `Icon` og `Text` for gjenbrukbare ikoner og typografi.
+
+1.5.8
 - Stack environment variables: expanded stack view now shows parsed env vars (secrets masked) and raw .env file.
 
 1.5.7

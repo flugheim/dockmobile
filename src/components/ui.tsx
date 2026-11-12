@@ -3,12 +3,13 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors, radius } from '../theme';
+import { Text } from './Text';
+import { Icon, type IconName } from './Icon';
+import { alpha, colors, radius } from '../theme';
 import { useSettings } from '../state/SettingsContext';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -20,6 +21,8 @@ interface Props {
   loading?: boolean;
   disabled?: boolean;
   small?: boolean;
+  /** Nerd Font-ikon som vises foran etiketten. */
+  icon?: IconName;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 }
@@ -31,10 +34,12 @@ export function Button({
   loading = false,
   disabled = false,
   small = false,
+  icon,
   style,
   testID,
 }: Props) {
   const isDisabled = disabled || loading;
+  const fg = variant === 'primary' ? colors.bgDeep : variant === 'danger' ? colors.red : colors.text;
   return (
     <Pressable
       accessibilityRole="button"
@@ -51,19 +56,62 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'primary' ? '#fff' : colors.text} />
+        <ActivityIndicator size="small" color={fg} />
       ) : (
-        <Text
-          style={[
-            styles.label,
-            small && styles.labelSmall,
-            variant === 'primary' ? styles.labelOnPrimary : styles.labelOnSurface,
-          ]}
-          numberOfLines={1}
-        >
-          {label}
-        </Text>
+        <View style={styles.content}>
+          {icon ? <Icon name={icon} size={small ? 14 : 16} color={fg} /> : null}
+          <Text
+            style={[styles.label, small && styles.labelSmall, { color: fg }]}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        </View>
       )}
+    </Pressable>
+  );
+}
+
+interface IconButtonProps {
+  icon: IconName;
+  accessibilityLabel: string;
+  onPress: () => void;
+  size?: number;
+  variant?: 'primary' | 'danger' | 'ghost';
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+}
+
+/** Ikonknapp uten tekst – brukes der plassen er knapp (topplinjer, modaler). */
+export function IconButton({
+  icon,
+  accessibilityLabel,
+  onPress,
+  size = 17,
+  variant = 'ghost',
+  disabled = false,
+  style,
+  testID,
+}: IconButtonProps) {
+  const fg = variant === 'primary' ? colors.bgDeep : variant === 'danger' ? colors.red : colors.text;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      testID={testID}
+      disabled={disabled}
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.iconButton,
+        variants[variant],
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
+        style,
+      ]}
+    >
+      <Icon name={icon} size={size} color={fg} />
     </Pressable>
   );
 }
@@ -82,25 +130,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radius.sm,
   },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
+  content: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  pressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
   disabled: { opacity: 0.45 },
-  label: { fontSize: 15, fontWeight: '600' },
-  labelSmall: { fontSize: 13, fontWeight: '600' },
-  labelOnPrimary: { color: '#fff' },
-  labelOnSurface: { color: colors.text },
+  label: { fontSize: 15, fontWeight: '700' },
+  labelSmall: { fontSize: 13, fontWeight: '700' },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 const variants: Record<Variant, ViewStyle> = {
   primary: { backgroundColor: colors.accent },
   secondary: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
-  danger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.red },
+  danger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: alpha(colors.red, 0.7) },
   ghost: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
 };
 
 /** Enkel placeholder når det ikke er noe å vise. */
-export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+export function EmptyState({
+  title,
+  hint,
+  icon,
+}: {
+  title: string;
+  hint?: string;
+  icon?: IconName;
+}) {
   return (
     <View style={empty.wrap}>
+      {icon ? <Icon name={icon} size={30} color={colors.textMuted} style={empty.icon} /> : null}
       <Text style={empty.title}>{title}</Text>
       {hint ? <Text style={empty.hint}>{hint}</Text> : null}
     </View>
@@ -109,8 +172,9 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
 
 const empty = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24 },
-  title: { color: colors.textDim, fontSize: 16, fontWeight: '600', textAlign: 'center' },
-  hint: { color: colors.textDim, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 19 },
+  icon: { marginBottom: 12 },
+  title: { color: colors.textDim, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  hint: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
 });
 
 /** Feilbanner med valgfri mulighet for å prøve igjen. */
@@ -124,9 +188,16 @@ export function ErrorBanner({
   const { t } = useSettings();
   return (
     <View style={err.wrap}>
+      <Icon name="warning" size={18} color={colors.red} style={err.icon} />
       <Text style={err.text}>{message}</Text>
       {onRetry ? (
-        <Button label={t('common_retry')} variant="secondary" small onPress={onRetry} />
+        <Button
+          label={t('common_retry')}
+          icon="refresh"
+          variant="secondary"
+          small
+          onPress={onRetry}
+        />
       ) : null}
     </View>
   );
@@ -134,8 +205,8 @@ export function ErrorBanner({
 
 const err = StyleSheet.create({
   wrap: {
-    backgroundColor: 'rgba(248,81,73,0.12)',
-    borderColor: colors.red,
+    backgroundColor: alpha(colors.red, 0.1),
+    borderColor: alpha(colors.red, 0.55),
     borderWidth: 1,
     borderRadius: radius.md,
     padding: 12,
@@ -143,7 +214,8 @@ const err = StyleSheet.create({
     marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  text: { color: colors.text, flex: 1, fontSize: 13, lineHeight: 18 },
+  icon: { marginTop: 1 },
+  text: { color: colors.text, flex: 1, fontSize: 13, lineHeight: 19 },
 });

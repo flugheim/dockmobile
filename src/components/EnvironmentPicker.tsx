@@ -1,8 +1,11 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import type { DockhandEnvironment } from '../types';
 import { useSettings } from '../state/SettingsContext';
-import { colors, radius } from '../theme';
+import { alpha, colors, radius } from '../theme';
+import { Icon } from './Icon';
+import { IconButton } from './ui';
+import { Text } from './Text';
 
 interface Props {
   visible: boolean;
@@ -28,7 +31,10 @@ export function EnvironmentPicker({
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.sheet}>
         <View style={styles.handle} />
-        <Text style={styles.title}>{t('settings_switchEnv')}</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('settings_switchEnv')}</Text>
+          <IconButton icon="close" size={18} accessibilityLabel={t('common_close')} onPress={onClose} variant="ghost" />
+        </View>
         {loading && environments.length === 0 ? (
           <Text style={styles.empty}>{t('env_loading')}</Text>
         ) : environments.length === 0 ? (
@@ -48,10 +54,13 @@ export function EnvironmentPicker({
                 ]}
                 onPress={() => onSelect(env)}
               >
-                <Text style={[styles.optionText, active && styles.optionTextActive]}>
-                  {env.name}
-                </Text>
-                {active ? <Text style={styles.check}>✓</Text> : null}
+                <View style={styles.optionContent}>
+                  <Icon name="server" size={18} color={active ? colors.accent : colors.text} />
+                  <Text style={[styles.optionText, active && styles.optionTextActive]}>
+                    {env.name}
+                  </Text>
+                </View>
+                {active ? <Icon name="check" size={18} color={colors.accent} style={styles.check} /> : null}
               </Pressable>
             );
           })
@@ -82,14 +91,19 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.border,
     alignSelf: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   title: {
     color: colors.textDim,
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
-    marginBottom: 8,
   },
   option: {
     flexDirection: 'row',
@@ -99,11 +113,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radius.md,
   },
-  optionActive: { backgroundColor: 'rgba(36,150,237,0.15)' },
+  optionContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  optionActive: { backgroundColor: alpha(colors.accent, 0.15) },
   optionPressed: { backgroundColor: colors.surfaceAlt },
   optionText: { color: colors.text, fontSize: 16 },
   optionTextActive: { color: colors.accent, fontWeight: '700' },
-  check: { color: colors.accent, fontSize: 16, fontWeight: '700' },
+  check: { marginLeft: 8 },
   empty: { color: colors.textDim, paddingVertical: 16, textAlign: 'center' },
   cancel: { marginTop: 8, paddingVertical: 12, alignItems: 'center' },
   cancelText: { color: colors.textDim, fontSize: 15, fontWeight: '600' },

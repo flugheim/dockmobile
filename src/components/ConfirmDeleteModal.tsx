@@ -3,12 +3,13 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import { Button } from './ui';
 import { useSettings } from '../state/SettingsContext';
+import { Icon } from './Icon';
+import { Text } from './Text';
 import { colors, radius } from '../theme';
 
 interface Props {
@@ -44,11 +45,17 @@ export function ConfirmDeleteModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={onCancel}>
         <Pressable style={styles.card} onPress={() => {}}>
-          <Text style={styles.title}>{title}</Text>
+          <View style={styles.header}>
+            <Icon name="warning" size={22} color={colors.red} />
+            <Text style={styles.title}>{title}</Text>
+          </View>
           <Text style={styles.message}>{message}</Text>
-          <Text style={styles.hint}>
-            {t('delete_confirmHint', { name: expectedName })}
-          </Text>
+          <View style={styles.hintWrap}>
+            <Icon name="key" size={14} color={colors.amber} />
+            <Text style={styles.hint}>
+              {t('delete_confirmHint', { name: expectedName })}
+            </Text>
+          </View>
           <TextInput
             style={styles.input}
             value={typed}
@@ -63,6 +70,7 @@ export function ConfirmDeleteModal({
             <Button label={t('common_cancel')} variant="secondary" small onPress={onCancel} disabled={busy} />
             <Button
               label={t('common_delete')}
+              icon="trash"
               variant="danger"
               small
               onPress={onConfirm}
@@ -79,7 +87,7 @@ export function ConfirmDeleteModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -94,11 +102,13 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
-  title: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  title: { color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 },
   message: { color: colors.textDim, fontSize: 14, lineHeight: 20 },
+  hintWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: -4 },
   hint: { color: colors.amber, fontSize: 13, fontWeight: '600' },
   input: {
-    backgroundColor: colors.bg,
+    backgroundColor: colors.bgDeep,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.md,

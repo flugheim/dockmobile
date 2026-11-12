@@ -1,20 +1,34 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
+import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SettingsProvider } from '../state/SettingsContext';
-import { colors } from '../theme';
+import { colors, font } from '../theme';
 
 export default function RootLayout() {
+  // JetBrainsMono Nerd Font brukes til både tekst og ikoner.
+  const [fontsLoaded, fontError] = useFonts({
+    [font.regular]: require('../../assets/fonts/JetBrainsMonoNerdFont-Regular.ttf'),
+    [font.bold]: require('../../assets/fonts/JetBrainsMonoNerdFont-Bold.ttf'),
+  });
+
+  if (!fontsLoaded && !fontError) {
+    // Tegn bakgrunnen mens fontene lastes, så vi slipper et hvitt blink.
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
   return (
     <SafeAreaProvider>
       <SettingsProvider>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: colors.surface },
+            headerStyle: { backgroundColor: colors.bg },
             headerTintColor: colors.text,
-            headerTitleStyle: { fontWeight: '700' },
+            headerShadowVisible: false,
+            headerTitleStyle: { fontFamily: font.bold, fontSize: 17 },
             contentStyle: { backgroundColor: colors.bg },
           }}
         >

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -7,52 +7,52 @@ import {
   RefreshControl,
   StyleSheet,
   Switch,
-  Text,
   View,
 } from 'react-native';
-import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
-import type { ComposeStack, DockhandEnvironment } from '../types';
+import { Redirect, Stack, useRouter } from 'expo-router';
+
 import { StackCard } from '../components/StackCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { HostInfoModal } from '../components/HostInfoModal';
-import { Button, EmptyState, ErrorBanner } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, IconButton } from '../components/ui';
+import { Icon } from '../components/Icon';
+import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
+import type { ComposeStack, DockhandEnvironment } from '../types';
 import { colors, radius } from '../theme';
 
 export default function StacksScreen() {
-  const {
-    client,
-    settings,
-    status,
-    environments,
-    selectEnvironment,
-    t,
-    lang,
-    refreshEnvironments,
-    environmentsLoading,
-  } = useSettings();
+  const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments } =
+    useSettings();
   const router = useRouter();
-  const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
+
   const [stacks, setStacks] = useState<ComposeStack[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [environmentsLoading, setEnvironmentsLoading] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [busyName, setBusyName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ComposeStack | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [busyName, setBusyName] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [deployTarget, setDeployTarget] = useState<string | null>(null);
-  const [deployOpts, setDeployOpts] = useState({ pull: true, build: false, forceRecreate: false });
   const [deployBusy, setDeployBusy] = useState(false);
+  const [deployOpts, setDeployOpts] = useState({
+    pull: true,
+    build: false,
+    forceRecreate: false,
+  });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
 
   const load = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode: 'init' | 'refresh' = 'init') => {
       if (!client) return;
-      if (mode === 'refresh') setRefreshing(true);
-      if (mode === 'initial') setLoading(true);
+      if (mode === 'init') setLoading(true);
       try {
         const list = await client.getStacks();
         setStacks(list);
@@ -68,27 +68,6 @@ export default function StacksScreen() {
     [client],
   );
 
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  useFocusEffect(
-    useCallback(() => {
-      void load('initial');
-      void refreshEnvironments();
-      const timer = setInterval(() => {
-        void load('refresh');
-      }, 20000);
-      return () => clearInterval(timer);
-    }, [load, refreshEnvironments]),
-  );
-
-  async function onSelectEnvironment(env: DockhandEnvironment) {
-    setPickerOpen(false);
-    setStacks([]);
-    setExpanded(new Set());
-    setLoading(true);
-    await selectEnvironment(env);
-  }
-
   function toggleExpanded(name: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -98,31 +77,18 @@ export default function StacksScreen() {
     });
   }
 
-  async function runStackAction(name: string, action: () => Promise<void>) {
-    setBusyName(name);
-    try {
-      await action();
-      setTimeout(() => void load('refresh'), 1500);
-    } catch (e) {
-      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusyName(null);
-    }
-  }
-
   function openDeployModal(name: string) {
-    setDeployOpts({ pull: true, build: false, forceRecreate: false });
     setDeployTarget(name);
+    setDeployOpts({ pull: true, build: false, forceRecreate: false });
   }
 
   async function runDeploy() {
     if (!client || !deployTarget) return;
-    const name = deployTarget;
     setDeployBusy(true);
     try {
-      await client.deployStack(name, deployOpts);
+      await client.deployStack(deployTarget, deployOpts);
       setDeployTarget(null);
-      setTimeout(() => void load('refresh'), 1500);
+      void load('refresh');
     } catch (e) {
       Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
     } finally {
@@ -131,12 +97,26 @@ export default function StacksScreen() {
   }
 
   function confirmRestart(name: string) {
-    Alert.alert(t('stack_restartConfirmTitle'), t('stack_restartConfirmMessage'), [
+    Alert.alert(t('confirmRestartTitle', { name }), t('confirmRestartMessage'), [
       { text: t('common_cancel'), style: 'cancel' },
       {
-        text: t('stack_restart'),
+        text: t('common_restart'),
         style: 'destructive',
-        onPress: () => void runStackAction(name, () => client!.restartStack(name)),
+        onPress: () => {
+          setBusyName(name);
+          if (!client) return;
+          client
+            .restartStack(name)
+            .then(() => {
+              setTimeout(() => void load('refresh'), 1500);
+            })
+            .catch((e) => {
+              Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+            })
+            .finally(() => {
+              setBusyName(null);
+            });
+        },
       },
     ]);
   }
@@ -155,6 +135,18 @@ export default function StacksScreen() {
     }
   }
 
+  async function onSelectEnvironment(env: DockhandEnvironment) {
+    setPickerOpen(false);
+    setStacks([]);
+    setLoading(true);
+    await selectEnvironment(env);
+  }
+
+  const sorted = useMemo(
+    () => [...stacks].sort((a, b) => a.name.localeCompare(b.name)),
+    [stacks],
+  );
+
   if (status === 'disconnected') {
     return <Redirect href="/connect" />;
   }
@@ -163,20 +155,18 @@ export default function StacksScreen() {
     return (
       <View style={[styles.flex, styles.center]}>
         <Stack.Screen options={{ title: t('nav_stacks') }} />
-        <Text style={styles.muted}>{t('stack_loading')}</Text>
+        <Text style={styles.muted}>{t('list_loading')}</Text>
       </View>
     );
   }
 
   const timeLocale = lang === 'nb' ? 'nb-NO' : 'en-GB';
 
-  const sorted = [...stacks].sort((a, b) => a.name.localeCompare(b.name));
-
   return (
     <View style={styles.flex}>
       <Stack.Screen
         options={{
-          title: t('nav_stacks'),
+          title: settings?.envName ?? t('nav_stacks'),
           headerRight: () => (
             <Button
               label={t('nav_settings')}
@@ -194,11 +184,11 @@ export default function StacksScreen() {
             void refreshEnvironments();
             setPickerOpen(true);
           }}
-          testID="stacks-env-switcher"
+          testID="env-switcher"
         >
           <View style={styles.topBarText}>
             <Text style={styles.envName} numberOfLines={1}>
-              {settings?.envName ?? t('list_envFallback')} ⌄
+              {settings?.envName ?? t('list_envFallback')}
             </Text>
             <Text style={styles.meta}>
               {lastUpdated
@@ -211,18 +201,29 @@ export default function StacksScreen() {
                 : ' '}
             </Text>
           </View>
+          <IconButton
+            icon="chevronDown"
+            size={14}
+            accessibilityLabel={t('settings_switchEnv')}
+            onPress={() => {
+              void refreshEnvironments();
+              setPickerOpen(true);
+            }}
+            variant="ghost"
+          />
         </Pressable>
         <View style={styles.topBarActions}>
-          <Pressable
-            style={styles.infoButton}
-            onPress={() => setInfoOpen(true)}
-            accessibilityRole="button"
+          <IconButton
+            icon="info"
+            size={16}
             accessibilityLabel={t('hostInfo_title')}
-          >
-            <Text style={styles.infoButtonText}>ℹ</Text>
-          </Pressable>
+            onPress={() => setInfoOpen(true)}
+            variant="ghost"
+            testID="info-button"
+          />
           <Button
             label={t('stack_create')}
+            icon="plus"
             variant="primary"
             small
             onPress={() => router.push('/create-stack')}
@@ -265,6 +266,7 @@ export default function StacksScreen() {
           <EmptyState
             title={t('stack_empty')}
             hint={t('stack_emptyHint')}
+            icon="cube"
           />
         }
         renderItem={({ item }) => (
@@ -283,25 +285,60 @@ export default function StacksScreen() {
       <Modal visible={!!deployTarget} transparent animationType="fade" onRequestClose={() => setDeployTarget(null)}>
         <Pressable style={modalStyles.backdrop} onPress={() => setDeployTarget(null)}>
           <Pressable style={modalStyles.card} onPress={() => {}}>
-            <Text style={modalStyles.title}>{t('stack_deployOptionsTitle')}</Text>
+            <View style={modalStyles.header}>
+              <Icon name="play" size={20} color={colors.accent} />
+              <Text style={modalStyles.title}>{t('stack_deployOptionsTitle')}</Text>
+            </View>
             <Text style={modalStyles.stackName}>{deployTarget}</Text>
 
             <View style={modalStyles.row}>
-              <Text style={modalStyles.label}>{t('stack_deployPull')}</Text>
-              <Switch value={deployOpts.pull} onValueChange={(v) => setDeployOpts((o) => ({ ...o, pull: v }))} trackColor={{ false: colors.border, true: colors.accent }} thumbColor="#fff" />
+              <View style={modalStyles.switchRow}>
+                <Icon name="download" size={18} color={colors.accent} />
+                <Text style={modalStyles.label}>{t('stack_deployPull')}</Text>
+              </View>
+              <Switch
+                value={deployOpts.pull}
+                onValueChange={(v) => setDeployOpts((o) => ({ ...o, pull: v }))}
+                trackColor={{ false: colors.border, true: colors.accent }}
+                thumbColor="#fff"
+              />
             </View>
             <View style={modalStyles.row}>
-              <Text style={modalStyles.label}>{t('stack_deployBuild')}</Text>
-              <Switch value={deployOpts.build} onValueChange={(v) => setDeployOpts((o) => ({ ...o, build: v }))} trackColor={{ false: colors.border, true: colors.accent }} thumbColor="#fff" />
+              <View style={modalStyles.switchRow}>
+                <Icon name="cube" size={18} color={colors.accent} />
+                <Text style={modalStyles.label}>{t('stack_deployBuild')}</Text>
+              </View>
+              <Switch
+                value={deployOpts.build}
+                onValueChange={(v) => setDeployOpts((o) => ({ ...o, build: v }))}
+                trackColor={{ false: colors.border, true: colors.accent }}
+                thumbColor="#fff"
+              />
             </View>
             <View style={modalStyles.row}>
-              <Text style={modalStyles.label}>{t('stack_deployForceRecreate')}</Text>
-              <Switch value={deployOpts.forceRecreate} onValueChange={(v) => setDeployOpts((o) => ({ ...o, forceRecreate: v }))} trackColor={{ false: colors.border, true: colors.accent }} thumbColor="#fff" />
+              <View style={modalStyles.switchRow}>
+                <Icon name="restart" size={18} color={colors.amber} />
+                <Text style={modalStyles.label}>{t('stack_deployForceRecreate')}</Text>
+              </View>
+              <Switch
+                value={deployOpts.forceRecreate}
+                onValueChange={(v) => setDeployOpts((o) => ({ ...o, forceRecreate: v }))}
+                trackColor={{ false: colors.border, true: colors.amber }}
+                thumbColor="#fff"
+              />
             </View>
 
             <View style={modalStyles.actions}>
               <Button label={t('common_cancel')} variant="secondary" small onPress={() => setDeployTarget(null)} disabled={deployBusy} />
-              <Button label={t('stack_deployRun')} variant="primary" small loading={deployBusy} disabled={deployBusy} onPress={() => void runDeploy()} />
+              <Button
+                label={t('stack_deployRun')}
+                icon="play"
+                variant="primary"
+                small
+                loading={deployBusy}
+                disabled={deployBusy}
+                onPress={() => void runDeploy()}
+              />
             </View>
           </Pressable>
         </Pressable>
@@ -334,33 +371,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topBarText: { flex: 1 },
-  envButton: { flex: 1 },
+  envButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  infoButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: 4,
-  },
-  infoButtonText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 });
 
 const modalStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -375,9 +396,11 @@ const modalStyles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
-  title: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  title: { color: colors.text, fontSize: 18, fontWeight: '800', flex: 1 },
   stackName: { color: colors.accent, fontSize: 14, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   label: { color: colors.text, fontSize: 14 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 8 },
 });

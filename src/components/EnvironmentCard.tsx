@@ -1,14 +1,39 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius } from '../theme';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { alpha, colors, radius } from '../theme';
 import { useSettings } from '../state/SettingsContext';
 import type { EnvironmentOverview } from '../types';
 import { HostInfoModal } from './HostInfoModal';
+import { Icon, type IconName } from './Icon';
+import { IconButton } from './ui';
+import { Text } from './Text';
 
 interface Props {
   overview: EnvironmentOverview;
   isActive: boolean;
   onPress: () => void;
+}
+
+function Badge({
+  icon,
+  label,
+  color,
+}: {
+  icon: IconName;
+  label: string;
+  color: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.badge,
+        { backgroundColor: alpha(color, 0.12), borderColor: alpha(color, 0.55) },
+      ]}
+    >
+      <Icon name={icon} size={12} color={color} />
+      <Text style={[styles.badgeText, { color }]}>{label}</Text>
+    </View>
+  );
 }
 
 export function EnvironmentCard({ overview, isActive, onPress }: Props) {
@@ -18,6 +43,7 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
   const [infoOpen, setInfoOpen] = useState(false);
 
   const isOffline = !!error;
+  const statusColor = isOffline ? colors.red : colors.green;
 
   return (
     <Pressable
@@ -32,29 +58,26 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
     >
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: isOffline ? colors.red : colors.green },
-            ]}
-          />
+          <Icon name="server" size={17} color={statusColor} />
           <Text style={styles.envName} numberOfLines={1}>
             {environment.name}
           </Text>
           {isActive ? (
             <View style={styles.activeBadge}>
+              <Icon name="check" size={11} color={colors.accent} />
               <Text style={styles.activeBadgeText}>{t('overview_active')}</Text>
             </View>
           ) : null}
         </View>
 
-        <Text style={[styles.statusText, { color: isOffline ? colors.red : colors.green }]}>
+        <Text style={[styles.statusText, { color: statusColor }]}>
           {isOffline ? t('overview_envOffline') : t('overview_envOnline')}
         </Text>
       </View>
 
       {error ? (
         <View style={styles.errorBox}>
+          <Icon name="warning" size={14} color={colors.red} />
           <Text style={styles.errorText} numberOfLines={2}>
             {error}
           </Text>
@@ -67,29 +90,24 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
         <View style={styles.body}>
           {/* Container metrics badges */}
           <View style={styles.metricsRow}>
-            {/* Kjører */}
-            <View style={[styles.badge, styles.badgeRunning]}>
-              <Text style={styles.badgeRunningText}>
-                {t('overview_runningBadge', { n: runningContainers })}
-              </Text>
-            </View>
-
-            {/* Stoppet */}
+            <Badge
+              icon="play"
+              color={colors.green}
+              label={t('overview_runningBadge', { n: runningContainers })}
+            />
             {stoppedContainers > 0 ? (
-              <View style={[styles.badge, styles.badgeStopped]}>
-                <Text style={styles.badgeStoppedText}>
-                  {t('overview_stoppedBadge', { n: stoppedContainers })}
-                </Text>
-              </View>
+              <Badge
+                icon="stop"
+                color={colors.red}
+                label={t('overview_stoppedBadge', { n: stoppedContainers })}
+              />
             ) : null}
-
-            {/* Oppdateringer */}
             {updatesAvailable > 0 ? (
-              <View style={[styles.badge, styles.badgeUpdates]}>
-                <Text style={styles.badgeUpdatesText}>
-                  {t('overview_updatesBadge', { n: updatesAvailable })}
-                </Text>
-              </View>
+              <Badge
+                icon="download"
+                color={colors.amber}
+                label={t('overview_updatesBadge', { n: updatesAvailable })}
+              />
             ) : null}
           </View>
 
@@ -102,18 +120,16 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
                   : t('overview_containerCount_other', { n: totalContainers })}
             </Text>
             <View style={styles.footerActions}>
-              <Pressable
-                style={styles.infoButton}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setInfoOpen(true);
-                }}
-                accessibilityRole="button"
+              <IconButton
+                icon="info"
+                size={15}
                 accessibilityLabel={t('hostInfo_title')}
-              >
-                <Text style={styles.infoButtonText}>ℹ</Text>
-              </Pressable>
-              <Text style={styles.tapPrompt}>{t('overview_tapToOpen')} →</Text>
+                onPress={() => setInfoOpen(true)}
+              />
+              <View style={styles.tapPrompt}>
+                <Text style={styles.tapPromptText}>{t('overview_tapToOpen')}</Text>
+                <Icon name="arrowRight" size={13} color={colors.accent} />
+              </View>
             </View>
           </View>
         </View>
@@ -133,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   activeCard: {
-    borderColor: colors.accent,
+    borderColor: alpha(colors.accent, 0.7),
     backgroundColor: colors.surfaceAlt,
   },
   pressed: {
@@ -152,11 +168,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginRight: 8,
   },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
   envName: {
     color: colors.text,
     fontSize: 18,
@@ -164,10 +175,13 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   activeBadge: {
-    backgroundColor: 'rgba(36,150,237,0.18)',
-    borderColor: colors.accent,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: alpha(colors.accent, 0.15),
+    borderColor: alpha(colors.accent, 0.6),
     borderWidth: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: radius.sm,
   },
@@ -189,35 +203,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   badge: {
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: radius.sm,
     borderWidth: 1,
   },
-  badgeRunning: {
-    backgroundColor: 'rgba(63,185,80,0.12)',
-    borderColor: colors.green,
-  },
-  badgeRunningText: {
-    color: colors.green,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  badgeStopped: {
-    backgroundColor: 'rgba(248,81,73,0.12)',
-    borderColor: colors.red,
-  },
-  badgeStoppedText: {
-    color: colors.red,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  badgeUpdates: {
-    backgroundColor: 'rgba(210,153,34,0.14)',
-    borderColor: colors.amber,
-  },
-  badgeUpdatesText: {
-    color: colors.amber,
+  badgeText: {
     fontSize: 12,
     fontWeight: '600',
   },
@@ -229,39 +223,34 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     paddingTop: 10,
+    gap: 8,
   },
   footerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  infoButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  infoButtonText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '700',
-  },
   totalText: {
     color: colors.textDim,
     fontSize: 13,
+    flexShrink: 1,
   },
   tapPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tapPromptText: {
     color: colors.accent,
     fontSize: 12,
     fontWeight: '600',
   },
   errorBox: {
-    backgroundColor: 'rgba(248,81,73,0.08)',
-    borderColor: colors.red,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: alpha(colors.red, 0.1),
+    borderColor: alpha(colors.red, 0.5),
     borderWidth: 1,
     borderRadius: radius.sm,
     padding: 10,
@@ -269,6 +258,8 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.red,
     fontSize: 12,
+    flex: 1,
+    lineHeight: 17,
   },
   loadingBox: {
     paddingVertical: 8,

@@ -1,7 +1,9 @@
 import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, ErrorBanner } from '../../components/ui';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { ErrorBanner, IconButton } from '../../components/ui';
+import { Icon } from '../../components/Icon';
+import { Text } from '../../components/Text';
 import { useSettings } from '../../state/SettingsContext';
 import { colors, radius } from '../../theme';
 
@@ -38,23 +40,40 @@ export default function LogsScreen() {
     <View style={styles.flex}>
       <Stack.Screen options={{ title: t('nav_logs') }} />
       <View style={styles.bar}>
-        <Text style={styles.title} numberOfLines={1}>
-          {name ?? t('logs_fallbackName')}
-        </Text>
-        <Button
-          label={paused ? t('logs_resume') : t('logs_pause')}
-          variant="secondary"
-          small
-          onPress={() => setPaused((p) => !p)}
-        />
-        <Button label={t('logs_reload')} variant="ghost" small onPress={() => void load()} />
+        <View style={styles.titleWrap}>
+          <Icon name="terminal" size={18} color={colors.accent} />
+          <Text style={styles.title} numberOfLines={1}>
+            {name ?? t('logs_fallbackName')}
+          </Text>
+        </View>
+        <View style={styles.barActions}>
+          <IconButton
+            icon={paused ? 'play' : 'pause'}
+            size={16}
+            accessibilityLabel={paused ? t('logs_resume') : t('logs_pause')}
+            onPress={() => setPaused((p) => !p)}
+            variant="ghost"
+            testID="logs-pause"
+          />
+          <IconButton
+            icon="refresh"
+            size={16}
+            accessibilityLabel={t('logs_reload')}
+            onPress={() => void load()}
+            variant="ghost"
+            testID="logs-reload"
+          />
+        </View>
       </View>
 
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
 
       <ScrollView style={styles.logBox} contentContainerStyle={{ padding: 12 }}>
         {lines.length === 0 ? (
-          <Text style={styles.empty}>{t('logs_empty')}</Text>
+          <View style={styles.emptyWrap}>
+            <Icon name="file" size={30} color={colors.textMuted} />
+            <Text style={styles.empty}>{t('logs_empty')}</Text>
+          </View>
         ) : (
           lines.map((l, i) => (
             <Text key={i} style={styles.line}>
@@ -72,16 +91,18 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  titleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
   title: { color: colors.text, fontWeight: '700', fontSize: 15, flex: 1 },
+  barActions: { flexDirection: 'row', gap: 4 },
   logBox: {
     flex: 1,
     margin: 12,
     marginTop: 0,
-    backgroundColor: '#05070b',
+    backgroundColor: colors.bgDeep,
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.md,
@@ -92,5 +113,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
   },
+  emptyWrap: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 10 },
   empty: { color: colors.textDim, fontSize: 13 },
 });

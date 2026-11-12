@@ -1,10 +1,11 @@
 {
   "name": "dockhand-app",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "main": "expo-router/entry",
   "dependencies": {
     "expo": "~57.0.30",
     "expo-constants": "~57.0.22",
+    "expo-font": "~57.0.4",
     "expo-linking": "~57.0.13",
     "expo-localization": "~57.0.2",
     "expo-router": "~57.0.28",

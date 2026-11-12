@@ -1,24 +1,25 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
+import { Redirect, Stack, useRouter } from 'expo-router';
 
 import { ContainerCard } from '../components/ContainerCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 import { EnvironmentPicker } from '../components/EnvironmentPicker';
 import { HostInfoModal } from '../components/HostInfoModal';
-import { Button, EmptyState, ErrorBanner } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, IconButton } from '../components/ui';
+import { Icon } from '../components/Icon';
+import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
 import type { TransKey } from '../i18n/translations';
 import type { Container, DockhandEnvironment } from '../types';
-import { colors, radius } from '../theme';
+import { alpha, colors, radius } from '../theme';
 
 type Filter = 'all' | 'running' | 'stopped' | 'updates';
 
@@ -30,40 +31,63 @@ const FILTERS: { key: Filter; labelKey: TransKey }[] = [
 ];
 
 export default function ContainersScreen() {
-  const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments, environmentsLoading } = useSettings();
+  const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments } =
+    useSettings();
   const router = useRouter();
-  const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
+
   const [containers, setContainers] = useState<Container[]>([]);
-  const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [updatingAll, setUpdatingAll] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [environmentsLoading, setEnvironmentsLoading] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Container | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const updatePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
+
+  const filtered = useMemo(() => {
+    switch (filter) {
+      case 'running':
+        return containers.filter((c) => c.state === 'running');
+      case 'stopped':
+        return containers.filter((c) => c.state !== 'running');
+      case 'updates':
+        return containers.filter((c) => c.updateAvailable);
+      default:
+        return containers;
+    }
+  }, [containers, filter]);
+
+  const withUpdates = useMemo(() => containers.filter((c) => c.updateAvailable), [containers]);
 
   const load = useCallback(
-    async (mode: 'initial' | 'refresh' = 'initial') => {
+    async (mode: 'init' | 'refresh' = 'init') => {
       if (!client) return;
-      if (mode === 'refresh') setRefreshing(true);
-      if (mode === 'initial') setLoading(true);
+      if (mode === 'init') setLoading(true);
       try {
         const [list, pending] = await Promise.all([
           client.getContainers(),
           client.getPendingUpdates().catch(() => []),
         ]);
         const pendingIds = new Set(pending.map((c) => c.id));
-        // Liste kan også bære flagg i seg selv
-        for (const c of list) if (c.updateAvailable) pendingIds.add(c.id);
+        for (const c of list) {
+          if (c.updateAvailable) pendingIds.add(c.id);
+        }
+        setContainers(
+          list.map((c) => ({
+            ...c,
+            updateAvailable: c.updateAvailable || pendingIds.has(c.id),
+          })),
+        );
         setUpdateIds(pendingIds);
-        setContainers(list.map((c) => ({ ...c, updateAvailable: pendingIds.has(c.id) })));
         setError(null);
         setLastUpdated(new Date());
       } catch (e) {
@@ -76,105 +100,41 @@ export default function ContainersScreen() {
     [client],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      void load('initial');
-      void refreshEnvironments();
-    }, [load, refreshEnvironments]),
-  );
-
-  // Auto-oppdatering av listen mens skjermen er åpen
-  useFocusEffect(
-    useCallback(() => {
-      const timer = setInterval(() => {
-        if (!busyId && !checkingUpdates && !updatingAll) void load('refresh');
-      }, 15000);
-      return () => clearInterval(timer);
-    }, [load, busyId, checkingUpdates, updatingAll]),
-  );
-
-  useEffect(
-    () => () => {
-      if (updatePollRef.current) clearInterval(updatePollRef.current);
-    },
-    [],
-  );
-
-  async function runAction(id: string, action: () => Promise<void>) {
-    setBusyId(id);
-    try {
-      await action();
-      // Gi serveren et øyeblikk før vi leser tilstanden igjen
-      setTimeout(() => void load('refresh'), 1200);
-    } catch (e) {
-      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function updateContainers(ids: string[]) {
-    if (!client || ids.length === 0) return;
-    setBusyId(ids.length === 1 ? ids[0] : 'bulk');
-    if (ids.length > 1) setUpdatingAll(true);
-    try {
-      await client.updateContainers(ids);
-      Alert.alert(
-        t('updateStartedTitle'),
-        ids.length === 1
-          ? t('updateStarted_one')
-          : t('updateStarted_other', { n: ids.length }),
-      );
-      // Følg med på status mens oppdateringen kjører
-      if (updatePollRef.current) clearInterval(updatePollRef.current);
-      let ticks = 0;
-      updatePollRef.current = setInterval(() => {
-        void load('refresh');
-        if (++ticks >= 12) {
-          if (updatePollRef.current) clearInterval(updatePollRef.current);
-          updatePollRef.current = null;
-          setBusyId(null);
-          setUpdatingAll(false);
-        }
-      }, 5000);
-    } catch (e) {
-      Alert.alert(t('updateFailed'), e instanceof Error ? e.message : String(e));
-      setBusyId(null);
-      setUpdatingAll(false);
-    }
-  }
-
   async function checkForUpdates() {
     if (!client) return;
     setCheckingUpdates(true);
     try {
-      await client.triggerUpdateCheck();
       const pending = await client.getPendingUpdates();
-      const ids = new Set(pending.map((c) => c.id));
-      setUpdateIds(ids);
-      setContainers((prev) => prev.map((c) => ({ ...c, updateAvailable: ids.has(c.id) })));
-      void load('refresh');
+      const pendingIds = new Set(pending.map((c) => c.id));
+      for (const c of containers) {
+        if (c.updateAvailable) pendingIds.add(c.id);
+      }
+      setContainers((prev) =>
+        prev.map((c) => ({
+          ...c,
+          updateAvailable: pendingIds.has(c.id),
+        })),
+      );
+      setUpdateIds(pendingIds);
     } catch (e) {
-      Alert.alert(t('checkFailed'), e instanceof Error ? e.message : String(e));
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
     } finally {
       setCheckingUpdates(false);
     }
   }
 
-  const filtered = useMemo(() => {
-    switch (filter) {
-      case 'running':
-        return containers.filter((c) => c.state === 'running');
-      case 'stopped':
-        return containers.filter((c) => c.state !== 'running');
-      case 'updates':
-        return containers.filter((c) => updateIds.has(c.id));
-      default:
-        return containers;
+  async function updateContainers(ids: string[]) {
+    if (!client) return;
+    setUpdatingAll(true);
+    try {
+      await client.updateContainers(ids);
+      void load('refresh');
+    } catch (e) {
+      Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+    } finally {
+      setUpdatingAll(false);
     }
-  }, [containers, filter, updateIds]);
-
-  const withUpdates = containers.filter((c) => updateIds.has(c.id));
+  }
 
   function confirmUpdateAll() {
     Alert.alert(
@@ -213,6 +173,20 @@ export default function ContainersScreen() {
     } finally {
       setDeleteBusy(false);
     }
+  }
+
+  function runAction(id: string, action: () => Promise<void>) {
+    setBusyId(id);
+    action()
+      .then(() => {
+        setTimeout(() => void load('refresh'), 1200);
+      })
+      .catch((e) => {
+        Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        setBusyId(null);
+      });
   }
 
   if (status === 'disconnected') {
@@ -256,7 +230,7 @@ export default function ContainersScreen() {
         >
           <View style={styles.topBarText}>
             <Text style={styles.envName} numberOfLines={1}>
-              {settings?.envName ?? t('list_envFallback')} ⌄
+              {settings?.envName ?? t('list_envFallback')}
             </Text>
             <Text style={styles.meta}>
               {lastUpdated
@@ -269,16 +243,26 @@ export default function ContainersScreen() {
                 : ' '}
             </Text>
           </View>
+          <IconButton
+            icon="chevronDown"
+            size={14}
+            accessibilityLabel={t('settings_switchEnv')}
+            onPress={() => {
+              void refreshEnvironments();
+              setPickerOpen(true);
+            }}
+            variant="ghost"
+          />
         </Pressable>
         <View style={styles.topBarActions}>
-          <Pressable
-            style={styles.infoButton}
-            onPress={() => setInfoOpen(true)}
-            accessibilityRole="button"
+          <IconButton
+            icon="info"
+            size={16}
             accessibilityLabel={t('hostInfo_title')}
-          >
-            <Text style={styles.infoButtonText}>ℹ</Text>
-          </Pressable>
+            onPress={() => setInfoOpen(true)}
+            variant="ghost"
+            testID="info-button"
+          />
           <Button
             label={t('nav_stacks')}
             variant="ghost"
@@ -288,6 +272,7 @@ export default function ContainersScreen() {
           />
           <Button
             label={t('list_check')}
+            icon="refresh"
             variant="secondary"
             small
             loading={checkingUpdates}
@@ -310,6 +295,7 @@ export default function ContainersScreen() {
 
       {withUpdates.length > 0 ? (
         <View style={styles.updateBanner}>
+          <Icon name="download" size={16} color={colors.amber} />
           <Text style={styles.updateBannerText}>
             {withUpdates.length === 1
               ? t('banner_one')
@@ -317,6 +303,7 @@ export default function ContainersScreen() {
           </Text>
           <Button
             label={t('updateAll')}
+            icon="download"
             small
             loading={updatingAll}
             onPress={confirmUpdateAll}
@@ -356,6 +343,7 @@ export default function ContainersScreen() {
             hint={
               filter === 'updates' ? t('empty_updatesHint') : t('empty_containersHint')
             }
+            icon={filter === 'updates' ? 'download' : 'cube'}
           />
         }
         renderItem={({ item }) => (
@@ -408,34 +396,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topBarText: { flex: 1 },
-  envButton: { flex: 1 },
+  envButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
   topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  infoButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: 4,
-  },
-  infoButtonText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
   updateBanner: {
     marginHorizontal: 16,
     marginTop: 4,
     padding: 12,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.amber,
-    backgroundColor: 'rgba(210,153,34,0.12)',
+    borderColor: alpha(colors.amber, 0.5),
+    backgroundColor: alpha(colors.amber, 0.1),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -446,6 +418,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    flexWrap: 'wrap',
   },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 });

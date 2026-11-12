@@ -1,8 +1,9 @@
 import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { Button } from '../components/ui';
+import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
 import type { LangChoice } from '../i18n/translations';
 import { CHANGELOG } from '../changelog';
@@ -27,14 +28,12 @@ export default function SettingsScreen() {
       Alert.alert(
         t('settings_testOk'),
         envs.length === 1
-          ? t('settings_connectedOne', { url: settings?.baseUrl ?? '', env: envs[0].name })
-          : t('settings_connectedMany', {
-              url: settings?.baseUrl ?? '',
-              n: envs.length,
-            }),
+          ? t('settings_connectedOne', { name: envs[0].name })
+          : t('settings_connectedMany', { n: envs.length }),
+        [{ text: t('common_ok') }],
       );
     } catch (e) {
-      Alert.alert(t('settings_testFailed'), e instanceof Error ? e.message : String(e));
+      Alert.alert(t('settings_testFailed'), e instanceof Error ? e.message : String(e), [{ text: t('common_ok') }]);
     } finally {
       setTesting(false);
     }
@@ -68,6 +67,7 @@ export default function SettingsScreen() {
         <Row label={t('settings_token')} value={'dh_…' + (settings?.token?.slice(-4) ?? '')} />
         <Button
           label={t('settings_test')}
+          icon="refresh"
           variant="secondary"
           loading={testing}
           onPress={() => void testConnection()}
@@ -81,7 +81,8 @@ export default function SettingsScreen() {
         {(['system', 'nb', 'en'] as LangChoice[]).map((choice) => (
           <Button
             key={choice}
-            label={langChoice === choice ? `✓ ${langLabel(choice)}` : langLabel(choice)}
+            label={langChoice === choice ? langLabel(choice) : langLabel(choice)}
+            icon={langChoice === choice ? 'check' : undefined}
             variant={langChoice === choice ? 'primary' : 'secondary'}
             onPress={() => void setLangChoice(choice)}
             style={{ marginTop: 8 }}
@@ -97,7 +98,8 @@ export default function SettingsScreen() {
             {environments.map((env) => (
               <Button
                 key={env.id}
-                label={env.id === settings?.envId ? `✓ ${env.name}` : env.name}
+                label={env.name}
+                icon={env.id === settings?.envId ? 'check' : undefined}
                 variant={env.id === settings?.envId ? 'primary' : 'secondary'}
                 onPress={() => void selectEnvironment(env)}
                 style={{ marginTop: 8 }}
@@ -112,6 +114,7 @@ export default function SettingsScreen() {
         <Row label={t('settings_version')} value={Constants.expoConfig?.version ?? '1.5.8'} />
         <Button
           label={t('settings_changelog')}
+          icon="file"
           variant="secondary"
           onPress={() =>
             Alert.alert(t('settings_changelogTitle'), CHANGELOG, [{ text: t('common_ok') }])
@@ -124,6 +127,7 @@ export default function SettingsScreen() {
 
       <Button
         label={t('settings_remove')}
+        icon="trash"
         variant="danger"
         onPress={confirmDisconnect}
         style={{ marginTop: 20 }}

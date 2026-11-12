@@ -1,11 +1,13 @@
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, ErrorBanner } from '../../components/ui';
+import { Icon, type IconName } from '../../components/Icon';
+import { Text } from '../../components/Text';
 import { useSettings } from '../../state/SettingsContext';
 
 import type { Container, ContainerInspect } from '../../types';
-import { colors, radius, stateColor } from '../../theme';
+import { alpha, colors, radius, stateColor } from '../../theme';
 import { containerStateLabel } from '../../i18n/translations';
 
 export default function ContainerDetailScreen() {
@@ -77,15 +79,16 @@ export default function ContainerDetailScreen() {
   }
 
   const running = container.state === 'running';
+  const status = stateColor(container.state);
 
   return (
     <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: t('nav_container') }} />
       <View style={styles.header}>
-        <View style={[styles.dot, { backgroundColor: stateColor(container.state) }]} />
+        <Icon name="cube" size={22} color={status} />
         <Text style={styles.name}>{container.name}</Text>
-        <View style={[styles.pill, { borderColor: stateColor(container.state) }]}>
-          <Text style={[styles.pillText, { color: stateColor(container.state) }]}>
+        <View style={[styles.pill, { borderColor: status }]}>
+          <Text style={[styles.pillText, { color: status }]}>
             {containerStateLabel(container.state, lang)}
           </Text>
         </View>
@@ -93,9 +96,11 @@ export default function ContainerDetailScreen() {
 
       {container.updateAvailable ? (
         <View style={styles.updateBox}>
+          <Icon name="download" size={16} color={colors.amber} />
           <Text style={styles.updateText}>{t('detail_updateAvailable')}</Text>
           <Button
             label={t('detail_updateNow')}
+            icon="download"
             small
             loading={busy}
             onPress={() => void runAction(() => client!.updateContainers([container.id]))}
@@ -108,6 +113,7 @@ export default function ContainerDetailScreen() {
         {running ? (
           <Button
             label={t('card_stop')}
+            icon="stop"
             variant="danger"
             disabled={busy}
             onPress={() =>
@@ -124,12 +130,14 @@ export default function ContainerDetailScreen() {
         ) : (
           <Button
             label={t('card_start')}
+            icon="play"
             disabled={busy}
             onPress={() => void runAction(() => client!.startContainer(container.id))}
           />
         )}
         <Button
           label={t('card_restart')}
+          icon="restart"
           variant="secondary"
           disabled={busy || !running}
           onPress={() => void runAction(() => client!.restartContainer(container.id))}
@@ -137,24 +145,25 @@ export default function ContainerDetailScreen() {
       </View>
 
       <View style={styles.infoCard}>
-        <Row label={t('detail_image')} value={container.image} />
-        <Row label={t('detail_id')} value={container.id} />
-        {container.statusText ? <Row label={t('detail_status')} value={container.statusText} /> : null}
-        {inspect?.Created ? <Row label={t('detail_created')} value={formatDate(inspect.Created)} /> : null}
+        <Row icon="file" label={t('detail_image')} value={container.image} />
+        <Row icon="tag" label={t('detail_id')} value={container.id} />
+        {container.statusText ? <Row icon="information" label={t('detail_status')} value={container.statusText} /> : null}
+        {inspect?.Created ? <Row icon="clock" label={t('detail_created')} value={formatDate(inspect.Created)} /> : null}
         {inspect?.State?.StartedAt && inspect.State.StartedAt !== '0001-01-01T00:00:00Z' ? (
-          <Row label={t('detail_started')} value={formatDate(inspect.State.StartedAt)} />
+          <Row icon="play" label={t('detail_started')} value={formatDate(inspect.State.StartedAt)} />
         ) : null}
         {inspect?.State?.FinishedAt && inspect.State.FinishedAt !== '0001-01-01T00:00:00Z' ? (
-          <Row label={t('detail_finished')} value={formatDate(inspect.State.FinishedAt)} />
+          <Row icon="stop" label={t('detail_finished')} value={formatDate(inspect.State.FinishedAt)} />
         ) : null}
         {typeof inspect?.State?.ExitCode === 'number' && inspect.State.ExitCode !== 0 ? (
-          <Row label={t('detail_exitCode')} value={String(inspect.State.ExitCode)} />
+          <Row icon="close" label={t('detail_exitCode')} value={String(inspect.State.ExitCode)} />
         ) : null}
         {typeof inspect?.RestartCount === 'number' && inspect.RestartCount > 0 ? (
-          <Row label={t('detail_restarts')} value={String(inspect.RestartCount)} />
+          <Row icon="restart" label={t('detail_restarts')} value={String(inspect.RestartCount)} />
         ) : null}
         {inspect?.HostConfig?.RestartPolicy?.Name ? (
           <Row
+            icon="refresh"
             label={t('detail_restartPolicy')}
             value={
               inspect.HostConfig.RestartPolicy.Name +
@@ -165,19 +174,22 @@ export default function ContainerDetailScreen() {
           />
         ) : null}
         {inspect?.HostConfig?.Memory ? (
-          <Row label={t('detail_memory')} value={formatBytes(inspect.HostConfig.Memory)} />
+          <Row icon="memory" label={t('detail_memory')} value={formatBytes(inspect.HostConfig.Memory)} />
         ) : null}
         {inspect?.HostConfig?.NanoCpus ? (
-          <Row label={t('detail_cpu')} value={`${(inspect.HostConfig.NanoCpus / 1e9).toFixed(2)} cores`} />
+          <Row icon="cpu" label={t('detail_cpu')} value={`${(inspect.HostConfig.NanoCpus / 1e9).toFixed(2)} cores`} />
         ) : null}
         {inspect?.State?.Health?.Status ? (
-          <Row label={t('detail_health')} value={inspect.State.Health.Status} />
+          <Row icon="shield-check" label={t('detail_health')} value={inspect.State.Health.Status} />
         ) : null}
       </View>
 
       {inspect ? (
         <View style={styles.infoCard}>
-          <Text style={styles.sectionLabel}>{t('detail_ports')}</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name="network" size={14} color={colors.accent} />
+            <Text style={styles.sectionLabel}>{t('detail_ports')}</Text>
+          </View>
           {formatPorts(inspect).length === 0 ? (
             <Text style={styles.mutedSmall}>{t('detail_noPorts')}</Text>
           ) : (
@@ -188,7 +200,10 @@ export default function ContainerDetailScreen() {
             ))
           )}
 
-          <Text style={[styles.sectionLabel, { marginTop: 8 }]}>{t('detail_mounts')}</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name="layers" size={14} color={colors.accent} />
+            <Text style={styles.sectionLabel}>{t('detail_mounts')}</Text>
+          </View>
           {formatMounts(inspect).length === 0 ? (
             <Text style={styles.mutedSmall}>{t('detail_noMounts')}</Text>
           ) : (
@@ -199,7 +214,10 @@ export default function ContainerDetailScreen() {
             ))
           )}
 
-          <Text style={[styles.sectionLabel, { marginTop: 8 }]}>{t('detail_networks')}</Text>
+          <View style={styles.sectionHeader}>
+            <Icon name="lan" size={14} color={colors.accent} />
+            <Text style={styles.sectionLabel}>{t('detail_networks')}</Text>
+          </View>
           {formatNetworks(inspect).length === 0 ? (
             <Text style={styles.mutedSmall}>{t('detail_noNetworks')}</Text>
           ) : (
@@ -214,6 +232,7 @@ export default function ContainerDetailScreen() {
 
       <Button
         label={t('detail_viewLogs')}
+        icon="terminal"
         variant="secondary"
         style={{ marginTop: 12 }}
         onPress={() =>
@@ -227,9 +246,10 @@ export default function ContainerDetailScreen() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   return (
     <View style={styles.row}>
+      <Icon name={icon} size={14} color={colors.textDim} style={styles.rowIcon} />
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue} selectable>
         {value}
@@ -244,7 +264,6 @@ const styles = StyleSheet.create({
   muted: { color: colors.textDim },
   content: { padding: 16, gap: 12 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
-  dot: { width: 12, height: 12, borderRadius: 6 },
   name: { color: colors.text, fontSize: 20, fontWeight: '800', flex: 1 },
   pill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
   pillText: { fontSize: 12, fontWeight: '700' },
@@ -253,13 +272,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderWidth: 1,
-    borderColor: colors.amber,
-    backgroundColor: 'rgba(210,153,34,0.12)',
+    borderColor: alpha(colors.amber, 0.5),
+    backgroundColor: alpha(colors.amber, 0.1),
     borderRadius: radius.md,
     padding: 12,
   },
   updateText: { color: colors.amber, flex: 1, fontWeight: '600', fontSize: 14 },
-  actions: { flexDirection: 'row', gap: 8 },
+  actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   infoCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
@@ -269,12 +288,14 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 4,
   },
-  row: { gap: 2 },
-  rowLabel: { color: colors.textDim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  rowValue: { color: colors.text, fontSize: 14 },
-  sectionLabel: { color: colors.textDim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginTop: 4 },
-  detailLine: { color: colors.text, fontSize: 12, fontFamily: 'monospace', lineHeight: 17 },
-  mutedSmall: { color: colors.textDim, fontSize: 12 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  rowIcon: { marginTop: 1, marginRight: 4 },
+  rowLabel: { color: colors.textDim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', minWidth: 100 },
+  rowValue: { color: colors.text, fontSize: 14, flex: 1 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  sectionLabel: { color: colors.textDim, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  detailLine: { color: colors.text, fontSize: 12, fontFamily: 'monospace', lineHeight: 17, marginLeft: 24 },
+  mutedSmall: { color: colors.textDim, fontSize: 12, marginLeft: 24 },
 });
 
 function formatDate(iso: string): string {

@@ -1,27 +1,64 @@
-/** Felles designverdier for appen. */
+/**
+ * Felles designverdier for appen.
+ *
+ * Paletten følger Omarchys Tokyo Night-tema, og fonten er JetBrainsMono Nerd
+ * Font – samme font som brukes på skrivebordet. Ikonene i appen er glyfer fra
+ * Nerd Font, ikke et eget ikonbibliotek.
+ */
 
 export const colors = {
-  bg: '#0b0e14',
-  surface: '#151a23',
-  surfaceAlt: '#1b2230',
-  border: '#2a3345',
-  text: '#e8edf4',
-  textDim: '#93a0b4',
-  accent: '#2496ed', // Docker-blå
-  accentDim: '#1b6cab',
-  green: '#3fb950',
-  red: '#f85149',
-  amber: '#d29922',
-  overlay: 'rgba(0,0,0,0.6)',
+  /** Bakgrunn for skjermer. */
+  bg: '#1a1b26',
+  /** Ekstra dyp bakgrunn (loggvindu, innfelt innhold). */
+  bgDeep: '#13141c',
+  /** Kort og flater. */
+  surface: '#24283b',
+  /** Hevet/valgt flate, f.eks. aktivt miljø. */
+  surfaceAlt: '#292e42',
+  border: '#3b4261',
+  /** Brødtekst. */
+  text: '#c0caf5',
+  /** Dempet tekst (etiketter, metadata). */
+  textDim: '#a9b1d6',
+  /** Sterkt dempet tekst (hint, plassholdere). */
+  textMuted: '#565f89',
+  accent: '#7aa2f7',
+  accentDim: '#3d59a1',
+  green: '#9ece6a',
+  red: '#f7768e',
+  amber: '#e0af68',
+  orange: '#eb927b',
+  magenta: '#ad8ee6',
+  cyan: '#449dab',
+  overlay: 'rgba(11, 12, 18, 0.78)',
 };
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 6,
+  md: 10,
+  lg: 14,
 };
 
 export const spacing = (n: number) => n * 4;
+
+/**
+ * Fontfamiliene som lastes i `app/_layout.tsx`. Nerd Font brukes både til
+ * tekst og til ikonglyfer.
+ */
+export const font = {
+  regular: 'JetBrainsMonoNF',
+  bold: 'JetBrainsMonoNF-Bold',
+};
+
+/** Legger alfa på en `#rrggbb`-farge. */
+export function alpha(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
 
 /** Farge for container-tilstand. */
 export function stateColor(state: string): string {
@@ -36,7 +73,7 @@ export function stateColor(state: string): string {
     case 'restarting':
       return colors.amber;
     default:
-      return colors.textDim;
+      return colors.textMuted;
   }
 }
 
@@ -49,9 +86,9 @@ export function stackStatusColor(status: string): string {
     case 'restarting':
       return colors.amber;
     case 'stopped':
-      return colors.textDim;
+      return colors.textMuted;
     default:
-      return colors.textDim;
+      return colors.textMuted;
   }
 }
 
@@ -65,6 +102,6 @@ export function stackHealthColor(health: string): string {
     case 'starting':
       return colors.amber;
     default:
-      return colors.textDim;
+      return colors.textMuted;
   }
 }

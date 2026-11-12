@@ -1,4 +1,7 @@
-export const CHANGELOG = `1.5.9
+export const CHANGELOG = `1.5.10
+- Fix: containers screen now loads on open (missing useFocusEffect was preventing initial load).
+
+1.5.9
 - Ikoner: alle knapper, kort og modaler bruker nå Nerd Font-glyfer (JetBrainsMono Nerd Font) i stedet for emoji/tekst.
 - Tema: endret til Tokyo Night-fargepalett (bakgrunn #1a1b26, accent #7aa2f7, osv.) og JetBrainsMono Nerd Font som UI-font.
 - Nye komponenter: 'Icon' og 'Text' for gjenbrukbare ikoner og typografi.

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Redirect, Stack, useRouter } from 'expo-router';
+import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 
 import { ContainerCard } from '../components/ContainerCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
@@ -98,6 +98,12 @@ export default function ContainersScreen() {
       }
     },
     [client],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void load('init');
+    }, [load]),
   );
 
   async function checkForUpdates() {

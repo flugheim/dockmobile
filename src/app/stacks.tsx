@@ -9,7 +9,7 @@ import {
   Switch,
   View,
 } from 'react-native';
-import { Redirect, Stack, useRouter } from 'expo-router';
+import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 
 import { StackCard } from '../components/StackCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
@@ -66,6 +66,12 @@ export default function StacksScreen() {
       }
     },
     [client],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void load('init');
+    }, [load]),
   );
 
   function toggleExpanded(name: string) {

@@ -149,6 +149,7 @@ const en = {
   // Containerkort
   card_updateAvailable: '⬆ Update available',
   card_update: 'Update',
+  card_releaseNotes: 'Release notes',
   card_start: 'Start',
   card_stop: 'Stop',
   card_restart: 'Restart',
@@ -408,6 +409,7 @@ const nb: Record<TransKey, string> = {
 
   card_updateAvailable: '⬆ Oppdatering tilgjengelig',
   card_update: 'Oppdater',
+  card_releaseNotes: 'Release notes',
   card_start: 'Start',
   card_stop: 'Stopp',
   card_restart: 'Omstart',

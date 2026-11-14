@@ -15,6 +15,7 @@ interface Props {
   onStop: () => void;
   onRestart: () => void;
   onUpdate: () => void;
+  onReleaseNotes?: () => void;
   onDelete: () => void;
 }
 
@@ -26,6 +27,7 @@ export function ContainerCard({
   onStop,
   onRestart,
   onUpdate,
+  onReleaseNotes,
   onDelete,
 }: Props) {
   const { t, lang } = useSettings();
@@ -69,6 +71,16 @@ export function ContainerCard({
             small
             testID={`update-${c.id}`}
           />
+          {onReleaseNotes ? (
+            <Button
+              label={t('card_releaseNotes')}
+              icon="link"
+              variant="secondary"
+              onPress={onReleaseNotes}
+              small
+              testID={`release-notes-${c.id}`}
+            />
+          ) : null}
         </View>
       ) : null}
 

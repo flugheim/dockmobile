@@ -1,4 +1,7 @@
-export const CHANGELOG = `1.5.12
+export const CHANGELOG = `1.5.13
+- Release notes: containers with pending updates now show a 'Release notes' button that opens the official GitHub releases page (GHCR and LinuxServer images supported).
+
+1.5.12
 - Fix: stack-listen starter nå øverst på skjermen i stedet for nederst.
 - UI: mer kompakte stack-kort og kontroller gir plass til flere stacker.
 

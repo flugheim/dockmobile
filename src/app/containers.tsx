@@ -6,6 +6,7 @@ import {
   RefreshControl,
   StyleSheet,
   View,
+  Linking,
 } from 'react-native';
 import { Redirect, Stack, useRouter, useFocusEffect } from 'expo-router';
 
@@ -20,6 +21,7 @@ import { useSettings } from '../state/SettingsContext';
 import type { TransKey } from '../i18n/translations';
 import type { Container, DockhandEnvironment } from '../types';
 import { alpha, colors, radius } from '../theme';
+import { releaseNotesUrl } from '../utils/releaseNotes';
 
 type Filter = 'all' | 'running' | 'stopped' | 'updates';
 
@@ -352,8 +354,10 @@ export default function ContainersScreen() {
             icon={filter === 'updates' ? 'download' : 'cube'}
           />
         }
-        renderItem={({ item }) => (
-          <ContainerCard
+        renderItem={({ item }) => {
+          const notesUrl = releaseNotesUrl(item.image);
+          return (
+            <ContainerCard
             container={item}
             busy={busyId === item.id}
             onPress={() => router.push(`/container/${item.id}`)}
@@ -370,9 +374,15 @@ export default function ContainersScreen() {
             }}
             onRestart={() => void runAction(item.id, () => client!.restartContainer(item.id))}
             onUpdate={() => void updateContainers([item.id])}
+            onReleaseNotes={
+              notesUrl
+                ? () => void Linking.openURL(notesUrl).catch(() => Alert.alert(t('actionFailed')))
+                : undefined
+            }
             onDelete={() => setDeleteTarget(item)}
           />
-        )}
+          );
+        }}
       />
 
       <ConfirmDeleteModal

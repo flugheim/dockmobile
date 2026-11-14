@@ -11,6 +11,7 @@ import {
   stripAnsi,
   toArray,
 } from '../api/client';
+import { releaseNotesUrl } from '../utils/releaseNotes';
 
 let failures = 0;
 declare const process: { exit(code: number): never };
@@ -33,6 +34,16 @@ check('flat liste: 2 containere', c1.length === 2);
 check('navn uten ledende /', c1[1].name === 'db');
 check('state leses', c1[0].state === 'running' && c1[1].state === 'exited');
 check('image leses', c1[0].image === 'nginx:latest');
+
+check(
+  'GHCR release notes',
+  releaseNotesUrl('ghcr.io/seerr-team/seerr:latest') === 'https://github.com/seerr-team/seerr/releases',
+);
+check(
+  'LinuxServer release notes',
+  releaseNotesUrl('lscr.io/linuxserver/sonarr:latest') === 'https://github.com/linuxserver/docker-sonarr/releases',
+);
+check('ukjent image har ingen release-lenke', releaseNotesUrl('postgres:16-alpine') === null);
 
 // 2. Innpakketliste
 const wrapped = { containers: flat };

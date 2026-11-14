@@ -183,67 +183,6 @@ export default function StacksScreen() {
           ),
         }}
       />
-      <View style={styles.topBar}>
-        <Pressable
-          style={styles.envButton}
-          onPress={() => {
-            void refreshEnvironments();
-            setPickerOpen(true);
-          }}
-          testID="env-switcher"
-        >
-          <View style={styles.topBarText}>
-            <Text style={styles.envName} numberOfLines={1}>
-              {settings?.envName ?? t('list_envFallback')}
-            </Text>
-            <Text style={styles.meta}>
-              {lastUpdated
-                ? t('list_updatedAt', {
-                    time: lastUpdated.toLocaleTimeString(timeLocale, {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    }),
-                  })
-                : ' '}
-            </Text>
-          </View>
-          <IconButton
-            icon="chevronDown"
-            size={14}
-            accessibilityLabel={t('settings_switchEnv')}
-            onPress={() => {
-              void refreshEnvironments();
-              setPickerOpen(true);
-            }}
-            variant="ghost"
-          />
-        </Pressable>
-        <View style={styles.topBarActions}>
-          <IconButton
-            icon="info"
-            size={16}
-            accessibilityLabel={t('hostInfo_title')}
-            onPress={() => setInfoOpen(true)}
-            variant="ghost"
-            testID="info-button"
-          />
-          <Button
-            label={t('stack_create')}
-            icon="plus"
-            variant="primary"
-            small
-            onPress={() => router.push('/create-stack')}
-            testID="create-stack"
-          />
-          <Button
-            label={t('nav_containers')}
-            variant="ghost"
-            small
-            onPress={() => router.replace('/containers')}
-          />
-        </View>
-      </View>
-
       <EnvironmentPicker
         visible={pickerOpen}
         environments={environments}
@@ -258,9 +197,72 @@ export default function StacksScreen() {
       {error ? <ErrorBanner message={error} onRetry={() => void load('refresh')} /> : null}
 
       <FlatList
+        style={styles.listView}
         data={sorted}
         keyExtractor={(s) => s.name}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <Pressable
+              style={styles.envButton}
+              onPress={() => {
+                void refreshEnvironments();
+                setPickerOpen(true);
+              }}
+              testID="env-switcher"
+            >
+              <View style={styles.topBarText}>
+                <Text style={styles.envName} numberOfLines={1}>
+                  {settings?.envName ?? t('list_envFallback')}
+                </Text>
+                <Text style={styles.meta}>
+                  {lastUpdated
+                    ? t('list_updatedAt', {
+                        time: lastUpdated.toLocaleTimeString(timeLocale, {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }),
+                      })
+                    : ' '}
+                </Text>
+              </View>
+              <IconButton
+                icon="chevronDown"
+                size={14}
+                accessibilityLabel={t('settings_switchEnv')}
+                onPress={() => {
+                  void refreshEnvironments();
+                  setPickerOpen(true);
+                }}
+                variant="ghost"
+              />
+            </Pressable>
+            <View style={styles.topBarActions}>
+              <IconButton
+                icon="info"
+                size={16}
+                accessibilityLabel={t('hostInfo_title')}
+                onPress={() => setInfoOpen(true)}
+                variant="ghost"
+                testID="info-button"
+              />
+              <Button
+                label={t('stack_create')}
+                icon="plus"
+                variant="primary"
+                small
+                onPress={() => router.push('/create-stack')}
+                testID="create-stack"
+              />
+              <Button
+                label={t('nav_containers')}
+                variant="ghost"
+                small
+                onPress={() => router.replace('/containers')}
+              />
+            </View>
+          </View>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -367,20 +369,13 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   muted: { color: colors.textDim },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    gap: 8,
-  },
+  listView: { flex: 1, minHeight: 0 },
+  listHeader: { paddingTop: 12, paddingBottom: 10, gap: 8 },
   topBarText: { flex: 1 },
-  envButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  envName: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  envButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  envName: { color: colors.text, fontSize: 16, fontWeight: '800' },
   meta: { color: colors.textDim, fontSize: 11, marginTop: 2 },
-  topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  topBarActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 });
 

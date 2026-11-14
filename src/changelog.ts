@@ -1,4 +1,8 @@
-export const CHANGELOG = `1.5.11
+export const CHANGELOG = `1.5.12
+- Fix: stack-listen starter nå øverst på skjermen i stedet for nederst.
+- UI: mer kompakte stack-kort og kontroller gir plass til flere stacker.
+
+1.5.11
 - Fix: stacks screen now loads on open (missing useFocusEffect was preventing initial load).
 
 1.5.10

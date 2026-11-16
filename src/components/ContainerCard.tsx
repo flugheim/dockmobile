@@ -60,27 +60,31 @@ export function ContainerCard({
       ) : null}
 
       {c.updateAvailable ? (
-        <View style={styles.updateRow}>
-          <Icon name="download" size={15} color={colors.amber} />
-          <Text style={styles.updateBadge}>{t('card_updateAvailable')}</Text>
-          <Button
-            label={t('card_update')}
-            icon="download"
-            onPress={onUpdate}
-            loading={busy}
-            small
-            testID={`update-${c.id}`}
-          />
-          {onReleaseNotes ? (
+        <View style={styles.updatePanel}>
+          <View style={styles.updateHeading}>
+            <Icon name="download" size={15} color={colors.amber} />
+            <Text style={styles.updateBadge}>{t('card_updateAvailable')}</Text>
+          </View>
+          <View style={styles.updateActions}>
             <Button
-              label={t('card_releaseNotes')}
-              icon="link"
-              variant="secondary"
-              onPress={onReleaseNotes}
+              label={t('card_update')}
+              icon="download"
+              onPress={onUpdate}
+              loading={busy}
               small
-              testID={`release-notes-${c.id}`}
+              testID={`update-${c.id}`}
             />
-          ) : null}
+            {onReleaseNotes ? (
+              <Button
+                label={t('card_releaseNotes')}
+                icon="link"
+                variant="secondary"
+                onPress={onReleaseNotes}
+                small
+                testID={`release-notes-${c.id}`}
+              />
+            ) : null}
+          </View>
         </View>
       ) : null}
 
@@ -131,30 +135,36 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.lg,
-    padding: 14,
-    marginBottom: 12,
-    gap: 6,
+    padding: 11,
+    marginBottom: 9,
+    gap: 5,
   },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   leadingIcon: { marginTop: 1 },
-  name: { color: colors.text, fontSize: 16, fontWeight: '700', flex: 1 },
-  pill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
-  pillText: { fontSize: 11, fontWeight: '700' },
-  image: { color: colors.textDim, fontSize: 13 },
-  statusText: { color: colors.textMuted, fontSize: 12 },
-  updateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  name: { color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 },
+  pill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1 },
+  pillText: { fontSize: 10, fontWeight: '700' },
+  image: { color: colors.textDim, fontSize: 11 },
+  statusText: { color: colors.textMuted, fontSize: 10 },
+  updatePanel: {
     backgroundColor: alpha(colors.amber, 0.1),
     borderColor: alpha(colors.amber, 0.5),
     borderWidth: 1,
     borderRadius: radius.md,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginTop: 4,
-    gap: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginTop: 3,
+    gap: 5,
+    flexGrow: 0,
+    flexShrink: 0,
   },
-  updateBadge: { color: colors.amber, fontSize: 13, fontWeight: '600', flex: 1 },
-  actions: { flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' },
+  updateHeading: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  updateActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  updateBadge: { color: colors.amber, fontSize: 11, fontWeight: '600', flexShrink: 1 },
+  actions: { flexDirection: 'row', gap: 6, marginTop: 3, flexWrap: 'wrap' },
 });

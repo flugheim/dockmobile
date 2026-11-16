@@ -28,7 +28,7 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: colors.bg },
             headerTintColor: colors.text,
             headerShadowVisible: false,
-            headerTitleStyle: { fontFamily: font.bold, fontSize: 17 },
+            headerTitleStyle: { fontFamily: font.bold, fontSize: 15 },
             contentStyle: { backgroundColor: colors.bg },
           }}
         >

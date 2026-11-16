@@ -44,6 +44,7 @@ export function Button({
     <Pressable
       accessibilityRole="button"
       testID={testID}
+      hitSlop={4}
       disabled={isDisabled}
       onPress={onPress}
       style={({ pressed }) => [
@@ -118,26 +119,26 @@ export function IconButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 44,
-    paddingHorizontal: 16,
+    minHeight: 36,
+    paddingHorizontal: 13,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
   small: {
-    minHeight: 34,
-    paddingHorizontal: 12,
+    minHeight: 28,
+    paddingHorizontal: 10,
     borderRadius: radius.sm,
   },
-  content: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  content: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
   disabled: { opacity: 0.45 },
-  label: { fontSize: 15, fontWeight: '700' },
-  labelSmall: { fontSize: 13, fontWeight: '700' },
+  label: { fontSize: 13, fontWeight: '700' },
+  labelSmall: { fontSize: 11, fontWeight: '700' },
   iconButton: {
-    width: 36,
-    height: 36,
+    width: 30,
+    height: 30,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',

@@ -84,6 +84,13 @@ export function Icon({ name, size = 16, color, style, accessibilityLabel }: Prop
           fontFamily: font.regular,
           fontSize: size,
           lineHeight: Math.round(size * 1.2),
+          // Android måler en tekstlinje til glyfens avans (0,6 em i en
+          // monospace-font) og klipper det som tegnes utenfor. Nerd Fonts'
+          // MDI-glyfer er ~0,88 em brede, så uten ekstra bredde forsvinner
+          // høyresiden av ikonet (f.eks. info- og kubusikonet). Bredden under
+          // gir blekket plass, og `textAlign: center` holder ikonet midtstilt.
+          width: Math.ceil(size * 1.2),
+          textAlign: 'center',
           color,
           includeFontPadding: false,
           textAlignVertical: 'center',

@@ -1,4 +1,7 @@
-export const CHANGELOG = `1.5.14
+export const CHANGELOG = `1.5.15
+- Fix: icons no longer get clipped on the right edge (info, cube, settings, refresh and other Nerd Font glyphs were cut off on high-density screens).
+
+1.5.14
 - UI: about 20% more compact layout - smaller buttons, icons, headers, cards, filters and lists, so more content fits on screen.
 - UI: the update panel on container cards is now stacked, with the badge on top and the Update / Release notes buttons below, so it no longer grows into a full-width block.
 

@@ -2,7 +2,9 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import type { DockhandEnvironment } from '../types';
 import { useSettings } from '../state/SettingsContext';
-import { alpha, colors, radius } from '../theme';
+import { alpha, radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 import { Icon } from './Icon';
 import { IconButton } from './ui';
 import { Text } from './Text';
@@ -26,6 +28,8 @@ export function EnvironmentPicker({
   loading,
 }: Props) {
   const { t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
@@ -73,7 +77,8 @@ export function EnvironmentPicker({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: colors.overlay },
   sheet: {
     backgroundColor: colors.surface,

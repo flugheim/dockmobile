@@ -5,19 +5,21 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 import { Button, ErrorBanner } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
-import { colors, radius } from '../theme';
-
-// Import TextInput here to avoid circular dependency
-import { TextInput } from 'react-native';
+import { radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 export default function ConnectScreen() {
   const { connect, error, t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [url, setUrl] = useState('');
   const [token, setToken] = useState('');
@@ -113,7 +115,8 @@ export default function ConnectScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 24, paddingTop: 72, flexGrow: 1 },
   logoWrap: { alignItems: 'center', marginBottom: 4 },

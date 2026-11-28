@@ -13,7 +13,9 @@ import { Text } from './Text';
 import { useSettings } from '../state/SettingsContext';
 import { DockhandClient } from '../api/client';
 import type { DockhandEnvironment, HostInfo, SystemInfo } from '../types';
-import { colors, radius } from '../theme';
+import { radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 interface Props {
   visible: boolean;
@@ -105,6 +107,8 @@ const sectionIcons: Record<string, IconName> = {
 };
 
 function InfoRow({ label, value, labelKey }: { label: string; value: string; labelKey: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const iconName = sectionIcons[labelKey] as IconName | undefined;
   return (
     <View style={styles.infoRow}>
@@ -119,6 +123,8 @@ function InfoRow({ label, value, labelKey }: { label: string; value: string; lab
 
 export function HostInfoModal({ visible, environment, onClose }: Props) {
   const { settings, t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { height } = useWindowDimensions();
   const maxScrollHeight = Math.round(height * 0.55);
   const [host, setHost] = useState<HostInfo | null>(null);
@@ -310,7 +316,8 @@ export function HostInfoModal({ visible, environment, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: colors.overlay,

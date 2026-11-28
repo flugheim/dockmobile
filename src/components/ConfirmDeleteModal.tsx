@@ -10,7 +10,9 @@ import { Button } from './ui';
 import { useSettings } from '../state/SettingsContext';
 import { Icon } from './Icon';
 import { Text } from './Text';
-import { colors, radius } from '../theme';
+import { radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 interface Props {
   visible: boolean;
@@ -32,6 +34,8 @@ export function ConfirmDeleteModal({
   onCancel,
 }: Props) {
   const { t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [typed, setTyped] = useState('');
 
   useEffect(() => {
@@ -84,7 +88,8 @@ export function ConfirmDeleteModal({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: colors.overlay,

@@ -1,17 +1,33 @@
 import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { Button } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
 import type { LangChoice } from '../i18n/translations';
 import { CHANGELOG } from '../changelog';
-import { colors, radius } from '../theme';
+import { alpha, radius } from '../theme';
+import { palettes, THEME_NAMES, themeMeta, type Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 export default function SettingsScreen() {
-  const { settings, environments, selectEnvironment, disconnect, client, t, langChoice, setLangChoice, refreshEnvironments } =
-    useSettings();
+  const {
+    settings,
+    environments,
+    selectEnvironment,
+    disconnect,
+    client,
+    t,
+    langChoice,
+    setLangChoice,
+    themeName,
+    setThemeName,
+    refreshEnvironments,
+  } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [testing, setTesting] = useState(false);
 
   useFocusEffect(
@@ -91,6 +107,38 @@ export default function SettingsScreen() {
         ))}
       </View>
 
+      <Text style={styles.groupTitle}>{t('settings_appearance')}</Text>
+      <View style={styles.card}>
+        <Text style={styles.note}>{t('settings_themeNote')}</Text>
+        {THEME_NAMES.map((name) => {
+          const active = themeName === name;
+          return (
+            <Pressable
+              key={name}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              onPress={() => void setThemeName(name)}
+              style={({ pressed }) => [
+                styles.themeRow,
+                active && styles.themeRowActive,
+                pressed && styles.themeRowPressed,
+              ]}
+              testID={`theme-${name}`}
+            >
+              <View style={styles.swatches}>
+                <View style={[styles.swatch, { backgroundColor: palettes[name].bg }]} />
+                <View style={[styles.swatch, { backgroundColor: palettes[name].surface }]} />
+                <View style={[styles.swatch, { backgroundColor: palettes[name].accent }]} />
+              </View>
+              <Text style={[styles.themeLabel, active && { color: colors.accent }]}>
+                {themeMeta[name].label}
+              </Text>
+              {active ? <Icon name="check" size={16} color={colors.accent} /> : null}
+            </Pressable>
+          );
+        })}
+      </View>
+
       {environments.length > 1 ? (
         <>
           <Text style={styles.groupTitle}>{t('settings_switchEnv')}</Text>
@@ -111,7 +159,7 @@ export default function SettingsScreen() {
 
       <Text style={styles.groupTitle}>{t('settings_about')}</Text>
       <View style={styles.card}>
-        <Row label={t('settings_version')} value={Constants.expoConfig?.version ?? '1.5.8'} />
+        <Row label={t('settings_version')} value={Constants.expoConfig?.version ?? '–'} />
         <Button
           label={t('settings_changelog')}
           icon="file"
@@ -137,6 +185,7 @@ export default function SettingsScreen() {
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -147,7 +196,8 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, paddingBottom: 48 },
   groupTitle: {
@@ -171,4 +221,19 @@ const styles = StyleSheet.create({
   rowValue: { color: colors.text, fontSize: 14 },
   about: { color: colors.textDim, fontSize: 13, lineHeight: 19 },
   note: { color: colors.textDim, fontSize: 13, lineHeight: 19 },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  themeRowActive: { borderColor: alpha(colors.accent, 0.6), backgroundColor: alpha(colors.accent, 0.12) },
+  themeRowPressed: { opacity: 0.75 },
+  swatches: { flexDirection: 'row', gap: 3 },
+  swatch: { width: 14, height: 14, borderRadius: 4, borderWidth: 1, borderColor: alpha(colors.textMuted, 0.5) },
+  themeLabel: { color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 },
 });

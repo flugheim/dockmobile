@@ -23,12 +23,14 @@ import {
   type TransKey,
 } from '../i18n/translations';
 import type { ConnectionSettings, DockhandEnvironment } from '../types';
+import { DEFAULT_THEME, isThemeName, type ThemeName } from '../theme/palettes';
 
 const KEY_URL = 'dockhand.baseUrl';
 const KEY_TOKEN = 'dockhand.token';
 const KEY_ENV_ID = 'dockhand.envId';
 const KEY_ENV_NAME = 'dockhand.envName';
 const KEY_LANG = 'dockhand.langChoice';
+const KEY_THEME = 'dockhand.themeName';
 
 function deviceLanguageCode(): string {
   try {
@@ -58,6 +60,9 @@ interface SettingsValue {
   /** Effektivt språk etter oppløsning mot telefonens språk. */
   lang: AppLang;
   setLangChoice: (choice: LangChoice) => Promise<void>;
+  /** Valgt fargetema (lagres på telefonen). */
+  themeName: ThemeName;
+  setThemeName: (name: ThemeName) => Promise<void>;
   /** Oversett en nøkkel til gjeldende språk. */
   t: (key: TransKey, vars?: Record<string, string | number>) => string;
 }
@@ -76,6 +81,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'disconnected' | 'connected'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [langChoice, setLangChoiceState] = useState<LangChoice>('system');
+  const [themeName, setThemeNameState] = useState<ThemeName>(DEFAULT_THEME);
 
   const lang = useMemo(
     () => resolveLang(langChoice, deviceLanguageCode()),
@@ -149,15 +155,19 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const [url, token, envId, envName, storedLang] = await Promise.all([
+        const [url, token, envId, envName, storedLang, storedTheme] = await Promise.all([
           SecureStore.getItemAsync(KEY_URL),
           SecureStore.getItemAsync(KEY_TOKEN),
           SecureStore.getItemAsync(KEY_ENV_ID),
           SecureStore.getItemAsync(KEY_ENV_NAME),
           SecureStore.getItemAsync(KEY_LANG),
+          SecureStore.getItemAsync(KEY_THEME),
         ]);
         if (storedLang === 'en' || storedLang === 'nb' || storedLang === 'system') {
           setLangChoiceState(storedLang);
+        }
+        if (isThemeName(storedTheme)) {
+          setThemeNameState(storedTheme);
         }
         if (url && token) {
           setSettings({
@@ -237,6 +247,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setLangChoiceState(choice);
   }, []);
 
+  const setThemeName = useCallback(async (name: ThemeName) => {
+    await SecureStore.setItemAsync(KEY_THEME, name);
+    setThemeNameState(name);
+  }, []);
+
   const client = useMemo(
     () => (settings ? new DockhandClient({
       baseUrl: settings.baseUrl,
@@ -259,6 +274,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       langChoice,
       lang,
       setLangChoice,
+      themeName,
+      setThemeName,
       t,
       environmentsLoading,
       refreshEnvironments,
@@ -275,6 +292,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       langChoice,
       lang,
       setLangChoice,
+      themeName,
+      setThemeName,
       t,
       environmentsLoading,
       refreshEnvironments,

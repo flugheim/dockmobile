@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
-import { alpha, colors, radius } from '../theme';
+import { alpha, radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 import { useSettings } from '../state/SettingsContext';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -39,6 +41,9 @@ export function Button({
   testID,
 }: Props) {
   const isDisabled = disabled || loading;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const variants = useThemedStyles(makeVariants);
   const fg = variant === 'primary' ? colors.bgDeep : variant === 'danger' ? colors.red : colors.text;
   return (
     <Pressable
@@ -95,6 +100,9 @@ export function IconButton({
   style,
   testID,
 }: IconButtonProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const variants = useThemedStyles(makeVariants);
   const fg = variant === 'primary' ? colors.bgDeep : variant === 'danger' ? colors.red : colors.text;
   return (
     <Pressable
@@ -117,7 +125,8 @@ export function IconButton({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   base: {
     minHeight: 36,
     paddingHorizontal: 13,
@@ -145,12 +154,12 @@ const styles = StyleSheet.create({
   },
 });
 
-const variants: Record<Variant, ViewStyle> = {
+const makeVariants = (colors: Palette): Record<Variant, ViewStyle> => ({
   primary: { backgroundColor: colors.accent },
   secondary: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
   danger: { backgroundColor: 'transparent', borderWidth: 1, borderColor: alpha(colors.red, 0.7) },
   ghost: { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
-};
+});
 
 /** Enkel placeholder når det ikke er noe å vise. */
 export function EmptyState({
@@ -162,6 +171,8 @@ export function EmptyState({
   hint?: string;
   icon?: IconName;
 }) {
+  const { colors } = useTheme();
+  const empty = useThemedStyles(makeEmptyStyles);
   return (
     <View style={empty.wrap}>
       {icon ? <Icon name={icon} size={30} color={colors.textMuted} style={empty.icon} /> : null}
@@ -171,12 +182,13 @@ export function EmptyState({
   );
 }
 
-const empty = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24 },
-  icon: { marginBottom: 12 },
-  title: { color: colors.textDim, fontSize: 16, fontWeight: '700', textAlign: 'center' },
-  hint: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
-});
+const makeEmptyStyles = (colors: Palette) =>
+  StyleSheet.create({
+    wrap: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24 },
+    icon: { marginBottom: 12 },
+    title: { color: colors.textDim, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+    hint: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  });
 
 /** Feilbanner med valgfri mulighet for å prøve igjen. */
 export function ErrorBanner({
@@ -187,6 +199,8 @@ export function ErrorBanner({
   onRetry?: () => void;
 }) {
   const { t } = useSettings();
+  const { colors } = useTheme();
+  const err = useThemedStyles(makeErrStyles);
   return (
     <View style={err.wrap}>
       <Icon name="warning" size={18} color={colors.red} style={err.icon} />
@@ -204,19 +218,20 @@ export function ErrorBanner({
   );
 }
 
-const err = StyleSheet.create({
-  wrap: {
-    backgroundColor: alpha(colors.red, 0.1),
-    borderColor: alpha(colors.red, 0.55),
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  icon: { marginTop: 1 },
-  text: { color: colors.text, flex: 1, fontSize: 13, lineHeight: 19 },
-});
+const makeErrStyles = (colors: Palette) =>
+  StyleSheet.create({
+    wrap: {
+      backgroundColor: alpha(colors.red, 0.1),
+      borderColor: alpha(colors.red, 0.55),
+      borderWidth: 1,
+      borderRadius: radius.md,
+      padding: 12,
+      marginHorizontal: 16,
+      marginTop: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    icon: { marginTop: 1 },
+    text: { color: colors.text, flex: 1, fontSize: 13, lineHeight: 19 },
+  });

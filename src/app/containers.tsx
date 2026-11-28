@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -20,7 +20,9 @@ import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
 import type { TransKey } from '../i18n/translations';
 import type { Container, DockhandEnvironment } from '../types';
-import { alpha, colors, radius } from '../theme';
+import { alpha, radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 import { releaseNotesUrl } from '../utils/releaseNotes';
 
 type Filter = 'all' | 'running' | 'stopped' | 'updates';
@@ -35,6 +37,8 @@ const FILTERS: { key: Filter; labelKey: TransKey }[] = [
 export default function ContainersScreen() {
   const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments } =
     useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
   const [containers, setContainers] = useState<Container[]>([]);
@@ -45,12 +49,18 @@ export default function ContainersScreen() {
   const [updatingAll, setUpdatingAll] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [environmentsLoading, setEnvironmentsLoading] = useState(false);
+
+  /** Åpner miljøvelgeren og henter fersk miljøliste mens den vises. */
+  const openEnvironmentPicker = useCallback(() => {
+    setPickerOpen(true);
+    setEnvironmentsLoading(true);
+    void refreshEnvironments().finally(() => setEnvironmentsLoading(false));
+  }, [refreshEnvironments]);
   const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Container | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [updateIds, setUpdateIds] = useState<Set<string>>(new Set());
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const currentEnv = environments.find((e) => e.id === settings?.envId) ?? environments[0] ?? null;
@@ -89,7 +99,6 @@ export default function ContainersScreen() {
             updateAvailable: c.updateAvailable || pendingIds.has(c.id),
           })),
         );
-        setUpdateIds(pendingIds);
         setError(null);
         setLastUpdated(new Date());
       } catch (e) {
@@ -123,7 +132,6 @@ export default function ContainersScreen() {
           updateAvailable: pendingIds.has(c.id),
         })),
       );
-      setUpdateIds(pendingIds);
     } catch (e) {
       Alert.alert(t('actionFailed'), e instanceof Error ? e.message : String(e));
     } finally {
@@ -164,7 +172,6 @@ export default function ContainersScreen() {
   async function onSelectEnvironment(env: DockhandEnvironment) {
     setPickerOpen(false);
     setContainers([]);
-    setUpdateIds(new Set());
     setLoading(true);
     await selectEnvironment(env);
   }
@@ -256,8 +263,7 @@ export default function ContainersScreen() {
             size={14}
             accessibilityLabel={t('settings_switchEnv')}
             onPress={() => {
-              void refreshEnvironments();
-              setPickerOpen(true);
+              openEnvironmentPicker();
             }}
             variant="ghost"
           />
@@ -398,7 +404,8 @@ export default function ContainersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   muted: { color: colors.textDim },

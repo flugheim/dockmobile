@@ -12,7 +12,9 @@ import { EnvironmentCard } from '../components/EnvironmentCard';
 import { Button, EmptyState, ErrorBanner } from '../components/ui';
 import { useSettings } from '../state/SettingsContext';
 import type { DockhandEnvironment, EnvironmentOverview } from '../types';
-import { colors, radius } from '../theme';
+import { radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 export default function EnvironmentsDashboardScreen() {
   const {
@@ -23,6 +25,8 @@ export default function EnvironmentsDashboardScreen() {
     t,
     refreshEnvironments,
   } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
   const [overviews, setOverviews] = useState<Record<string, EnvironmentOverview>>({});
@@ -317,7 +321,8 @@ export default function EnvironmentsDashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   metricsContainer: {
     flexDirection: 'row',

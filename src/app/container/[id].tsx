@@ -7,11 +7,15 @@ import { Text } from '../../components/Text';
 import { useSettings } from '../../state/SettingsContext';
 
 import type { Container, ContainerInspect } from '../../types';
-import { alpha, colors, radius, stateColor } from '../../theme';
+import { alpha, radius, stateColor } from '../../theme';
+import type { Palette } from '../../theme/palettes';
+import { useTheme, useThemedStyles } from '../../theme/styles';
 import { containerStateLabel } from '../../i18n/translations';
 
 export default function ContainerDetailScreen() {
   const { client, t, lang } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [container, setContainer] = useState<Container | null>(null);
@@ -79,7 +83,7 @@ export default function ContainerDetailScreen() {
   }
 
   const running = container.state === 'running';
-  const status = stateColor(container.state);
+  const status = stateColor(colors, container.state);
 
   return (
     <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
@@ -247,6 +251,8 @@ export default function ContainerDetailScreen() {
 }
 
 function Row({ icon, label, value }: { icon: IconName; label: string; value: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Icon name={icon} size={14} color={colors.textDim} style={styles.rowIcon} />
@@ -258,7 +264,8 @@ function Row({ icon, label, value }: { icon: IconName; label: string; value: str
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   muted: { color: colors.textDim },

@@ -3,7 +3,9 @@ import type { Container } from '../types';
 import { Button } from './ui';
 import { Icon } from './Icon';
 import { Text } from './Text';
-import { alpha, colors, radius, stateColor } from '../theme';
+import { alpha, radius, stateColor } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 import { containerStateLabel } from '../i18n/translations';
 import { useSettings } from '../state/SettingsContext';
 
@@ -31,8 +33,10 @@ export function ContainerCard({
   onDelete,
 }: Props) {
   const { t, lang } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const running = c.state === 'running';
-  const status = stateColor(c.state);
+  const status = stateColor(colors, c.state);
   return (
     <Pressable
       onPress={onPress}
@@ -129,7 +133,8 @@ export function ContainerCard({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderColor: colors.border,

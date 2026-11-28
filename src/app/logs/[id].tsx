@@ -5,10 +5,14 @@ import { ErrorBanner, IconButton } from '../../components/ui';
 import { Icon } from '../../components/Icon';
 import { Text } from '../../components/Text';
 import { useSettings } from '../../state/SettingsContext';
-import { colors, radius } from '../../theme';
+import { radius } from '../../theme';
+import type { Palette } from '../../theme/palettes';
+import { useTheme, useThemedStyles } from '../../theme/styles';
 
 export default function LogsScreen() {
   const { client, t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const [lines, setLines] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
@@ -86,7 +90,8 @@ export default function LogsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   bar: {
     flexDirection: 'row',

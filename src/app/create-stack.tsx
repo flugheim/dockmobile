@@ -13,10 +13,14 @@ import { Button, ErrorBanner } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
-import { colors, radius } from '../theme';
+import { radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 export default function CreateStackScreen() {
   const { client, status, t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [name, setName] = useState('');
   const [compose, setCompose] = useState('');
@@ -184,7 +188,8 @@ export default function CreateStackScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, paddingBottom: 48 },
   field: { marginTop: 16 },

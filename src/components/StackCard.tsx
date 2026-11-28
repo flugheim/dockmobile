@@ -6,7 +6,9 @@ import { useSettings } from '../state/SettingsContext';
 import { Button, IconButton } from './ui';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
-import { alpha, colors, radius, stackStatusColor, stackHealthColor, stateColor } from '../theme';
+import { alpha, radius, stackStatusColor, stackHealthColor, stateColor } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 import {
   containerStateLabel,
   stackHealthLabel,
@@ -39,9 +41,11 @@ const healthIcons: Record<string, IconName> = {
 
 export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart, onDelete }: Props) {
   const { t, lang, client } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const hasContainers = stack.containers.length > 0;
-  const statusColor = stackStatusColor(stack.status);
-  const healthColor = stackHealthColor(stack.health);
+  const statusColor = stackStatusColor(colors, stack.status);
+  const healthColor = stackHealthColor(colors, stack.health);
   const [envVars, setEnvVars] = useState<{ key: string; value: string; isSecret?: boolean }[] | null>(null);
   const [envRaw, setEnvRaw] = useState<string | null>(null);
   const [envLoading, setEnvLoading] = useState(false);
@@ -120,7 +124,7 @@ export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart
           {stack.name}
         </Text>
         <View style={[styles.pill, { borderColor: statusColor }]}>
-          <Icon name={statusIcons[stack.status] ?? 'circle'} size={11} color={statusColor} style={styles.pillIcon} />
+          <Icon name={statusIcons[stack.status] ?? 'stop'} size={11} color={statusColor} style={styles.pillIcon} />
           <Text style={[styles.pillText, { color: statusColor }]}>
             {stackStatusLabel(stack.status, lang)}
           </Text>
@@ -201,7 +205,7 @@ export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart
           <View style={styles.containerList}>
             {stack.containers.map((c) => (
               <View key={c.id} style={styles.containerRow}>
-                <Icon name="cube" size={13} color={stateColor(c.state)} style={styles.smallIcon} />
+                <Icon name="cube" size={13} color={stateColor(colors, c.state)} style={styles.smallIcon} />
                 <View style={styles.containerInfo}>
                   <Text style={styles.containerService} numberOfLines={1}>
                     {c.service}
@@ -237,7 +241,8 @@ export function StackCard({ stack, expanded, busy, onToggle, onDeploy, onRestart
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderColor: colors.border,

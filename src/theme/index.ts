@@ -1,37 +1,11 @@
 /**
  * Felles designverdier for appen.
  *
- * Paletten følger Omarchys Tokyo Night-tema, og fonten er JetBrainsMono Nerd
- * Font – samme font som brukes på skrivebordet. Ikonene i appen er glyfer fra
- * Nerd Font, ikke et eget ikonbibliotek.
+ * Fargene ligger i `./palettes.ts` og leses med `useTheme()` fra `./styles.ts`,
+ * slik at temaet kan byttes uten omlasting. Her ligger bare verdier som er like
+ * for alle temaer (radius, font, avstand) og hjelpefunksjoner.
  */
-
-export const colors = {
-  /** Bakgrunn for skjermer. */
-  bg: '#1a1b26',
-  /** Ekstra dyp bakgrunn (loggvindu, innfelt innhold). */
-  bgDeep: '#13141c',
-  /** Kort og flater. */
-  surface: '#24283b',
-  /** Hevet/valgt flate, f.eks. aktivt miljø. */
-  surfaceAlt: '#292e42',
-  border: '#3b4261',
-  /** Brødtekst. */
-  text: '#c0caf5',
-  /** Dempet tekst (etiketter, metadata). */
-  textDim: '#a9b1d6',
-  /** Sterkt dempet tekst (hint, plassholdere). */
-  textMuted: '#565f89',
-  accent: '#7aa2f7',
-  accentDim: '#3d59a1',
-  green: '#9ece6a',
-  red: '#f7768e',
-  amber: '#e0af68',
-  orange: '#eb927b',
-  magenta: '#ad8ee6',
-  cyan: '#449dab',
-  overlay: 'rgba(11, 12, 18, 0.78)',
-};
+import type { Palette } from './palettes';
 
 export const radius = {
   sm: 6,
@@ -61,7 +35,7 @@ export function alpha(hex: string, a: number): string {
 }
 
 /** Farge for container-tilstand. */
-export function stateColor(state: string): string {
+export function stateColor(colors: Palette, state: string): string {
   switch (state) {
     case 'running':
       return colors.green;
@@ -69,7 +43,6 @@ export function stateColor(state: string): string {
     case 'dead':
       return colors.red;
     case 'paused':
-      return colors.amber;
     case 'restarting':
       return colors.amber;
     default:
@@ -78,7 +51,7 @@ export function stateColor(state: string): string {
 }
 
 /** Farge for stack-status. */
-export function stackStatusColor(status: string): string {
+export function stackStatusColor(colors: Palette, status: string): string {
   switch (status) {
     case 'running':
       return colors.green;
@@ -93,7 +66,7 @@ export function stackStatusColor(status: string): string {
 }
 
 /** Farge for stack-helse. */
-export function stackHealthColor(health: string): string {
+export function stackHealthColor(colors: Palette, health: string): string {
   switch (health) {
     case 'healthy':
       return colors.green;

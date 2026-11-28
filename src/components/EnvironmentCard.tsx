@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { alpha, colors, radius } from '../theme';
+import { alpha, radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 import { useSettings } from '../state/SettingsContext';
 import type { EnvironmentOverview } from '../types';
 import { HostInfoModal } from './HostInfoModal';
@@ -23,6 +25,7 @@ function Badge({
   label: string;
   color: string;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View
       style={[
@@ -38,6 +41,8 @@ function Badge({
 
 export function EnvironmentCard({ overview, isActive, onPress }: Props) {
   const { t } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { environment, totalContainers, runningContainers, stoppedContainers, updatesAvailable, loading, error } =
     overview;
   const [infoOpen, setInfoOpen] = useState(false);
@@ -139,7 +144,8 @@ export function EnvironmentCard({ overview, isActive, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderColor: colors.border,

@@ -34,6 +34,7 @@ const en = {
   nav_logs: 'Logs',
   nav_settings: 'Settings',
   nav_stacks: 'Stacks',
+  nav_createStack: 'New stack',
 
   // Dashboard / Miljøoversikt
   overview_title: 'Dashboard',
@@ -274,6 +275,8 @@ const en = {
   settings_language: 'Language',
   settings_langSystem: 'System',
   settings_langNote: "Follows the phone's language. You can override it here.",
+  settings_appearance: 'Appearance',
+  settings_themeNote: 'Color theme for the whole app. Applies immediately.',
   env_empty: 'No environments found.',
   env_loading: 'Loading environments …',
 } as const;
@@ -300,6 +303,7 @@ const nb: Record<TransKey, string> = {
   nav_logs: 'Logger',
   nav_settings: 'Innstillinger',
   nav_stacks: 'Stacker',
+  nav_createStack: 'Ny stack',
 
   overview_title: 'Oversikt',
   overview_loading: 'Laster miljøer …',
@@ -530,6 +534,8 @@ const nb: Record<TransKey, string> = {
   settings_language: 'Språk',
   settings_langSystem: 'System',
   settings_langNote: 'Følger telefonens språk. Du kan overstyre det her.',
+  settings_appearance: 'Utseende',
+  settings_themeNote: 'Fargetema for hele appen. Endres umiddelbart.',
   env_empty: 'Ingen miljøer funnet.',
   env_loading: 'Laster miljøer …',
 };

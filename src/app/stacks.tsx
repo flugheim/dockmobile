@@ -20,11 +20,16 @@ import { Icon } from '../components/Icon';
 import { Text } from '../components/Text';
 import { useSettings } from '../state/SettingsContext';
 import type { ComposeStack, DockhandEnvironment } from '../types';
-import { colors, radius } from '../theme';
+import { radius } from '../theme';
+import type { Palette } from '../theme/palettes';
+import { useTheme, useThemedStyles } from '../theme/styles';
 
 export default function StacksScreen() {
   const { client, settings, status, environments, selectEnvironment, t, lang, refreshEnvironments } =
     useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const modalStyles = useThemedStyles(makeModalStyles);
   const router = useRouter();
 
   const [stacks, setStacks] = useState<ComposeStack[]>([]);
@@ -32,6 +37,13 @@ export default function StacksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [environmentsLoading, setEnvironmentsLoading] = useState(false);
+
+  /** Åpner miljøvelgeren og henter fersk miljøliste mens den vises. */
+  const openEnvironmentPicker = useCallback(() => {
+    setPickerOpen(true);
+    setEnvironmentsLoading(true);
+    void refreshEnvironments().finally(() => setEnvironmentsLoading(false));
+  }, [refreshEnvironments]);
   const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ComposeStack | null>(null);
@@ -206,8 +218,7 @@ export default function StacksScreen() {
             <Pressable
               style={styles.envButton}
               onPress={() => {
-                void refreshEnvironments();
-                setPickerOpen(true);
+                openEnvironmentPicker();
               }}
               testID="env-switcher"
             >
@@ -365,7 +376,8 @@ export default function StacksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   muted: { color: colors.textDim },
@@ -379,7 +391,8 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 32 },
 });
 
-const modalStyles = StyleSheet.create({
+const makeModalStyles = (colors: Palette) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: colors.overlay,

@@ -28,7 +28,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "tsc src/__tests__/client.test.ts src/__tests__/i18n.test.ts --ignoreConfig --outDir dist-test --module commonjs --moduleResolution node10 --ignoreDeprecations 6.0 --target es2020 --skipLibCheck --esModuleInterop && node dist-test/__tests__/client.test.js && node dist-test/__tests__/i18n.test.js"
+    "test": "tsc src/__tests__/client.test.ts src/__tests__/i18n.test.ts src/__tests__/palettes.test.ts --ignoreConfig --outDir dist-test --module commonjs --moduleResolution node10 --ignoreDeprecations 6.0 --target es2020 --skipLibCheck --esModuleInterop && node dist-test/__tests__/client.test.js && node dist-test/__tests__/i18n.test.js && node dist-test/__tests__/palettes.test.js"
   },
   "private": true,
   "overrides": {

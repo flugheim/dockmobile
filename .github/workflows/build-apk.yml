@@ -98,6 +98,16 @@ jobs:
           cp "$APK_PATH" dockmobile.apk
           echo "apk_path=dockmobile.apk" >> $GITHUB_OUTPUT
 
+      - name: Verify APK version matches app.json
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          CODE=$(node -p "require('./app.json').expo.android.versionCode")
+          AAPT2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -n 1)
+          BADGING=$("$AAPT2" dump badging dockmobile.apk | head -n 1)
+          echo "$BADGING"
+          echo "$BADGING" | grep -q "versionCode='$CODE'" || { echo "::error::APK versionCode matcher ikke app.json ($CODE)"; exit 1; }
+          echo "$BADGING" | grep -q "versionName='$VERSION'" || { echo "::error::APK versionName matcher ikke app.json ($VERSION)"; exit 1; }
+
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:

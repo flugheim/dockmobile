@@ -2,7 +2,21 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+import groovy.json.JsonSlurper
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+
+/**
+ * App-versjonen hentes fra app.json, som er eneste kilde til sannhet.
+ *
+ * `android/` er committet (prebuildet), så `expo prebuild` oppdaterer ikke
+ * disse feltene av seg selv. Uten dette ble alle APK-er bygget med samme
+ * versionCode/versionName som da android/ ble generert.
+ *
+ * versionCode følger `major * 10000 + minor * 100 + patch` (1.6.0 -> 10600),
+ * slik at den alltid øker monotont. Må være høyere enn alle tidligere koder.
+ */
+def expoApp = new JsonSlurper().parse(file("../../app.json")).expo
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -92,8 +106,8 @@ android {
         applicationId 'no.flugheim.dockmobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 12
-        versionName "1.5.5"
+        versionCode expoApp.android.versionCode as Integer
+        versionName expoApp.version
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

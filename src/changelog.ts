@@ -1,5 +1,5 @@
 export const CHANGELOG = `1.6.0
-- Themes: pick Tokyo Night, Dracula or Nord in Settings - Appearance. The choice is stored on the phone and applies immediately.
+- Themes: eight built-in palettes (Tokyo Night, Dracula, Nord, Catppuccin Mocha, Gruvbox Dark, One Dark, Rose Pine, Kanagawa) in Settings - Appearance. The choice is stored on the phone and applies immediately.
 - Fix: the version shown in Settings now matches the installed app (every Android build since 1.5.5 reported 1.5.5).
 - Fix: screen titles now follow the selected language.
 - Cleanup: environment picker shows a spinner while refreshing, and dead code/lint warnings are gone.
